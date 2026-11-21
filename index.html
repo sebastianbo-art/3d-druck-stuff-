@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050706">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Filamentregal">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Filamentregal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: werkstattnah, klar, ruhig – Bambu Night: tiefschwarz mit Bambu-Grün
+   IDEA: ein Regal voller Filamentspulen, jede zeigt ihren Füllstand
+   PICTURE: die Spulen selbst, in ihrer echten Farbe, Ring = Restmenge
+   COLOUR and TYPE: Druckbett-Graphit, Weiß, Düsen-Orange als Akzent; Barlow Condensed + Barlow
+   LAYOUT: Graphit-Kopf mit Kennzahlen, Tabs, Spulenraster; Berater als Chips + Rangliste */
+:root{color-scheme:dark;--bg:#0b0d0c;--card:#151917;--field:#0f1311;--ink:#eef2ef;--mute:#8a958e;--line:#26302a;--track:#1f2723;--hot:#00ae42;--hotink:#5fe08f;--hotbg:#0f2a1a;--ok:#5fe08f;--warn:#f0b45a;--warnbg:#2a2010;--alarm:#ff7a45;--alarmink:#ff9a70;--alarmbg:#2e1610;--bed:#111513}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Barlow,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:"Barlow Condensed",Barlow,sans-serif;font-weight:600;line-height:1.05;margin:0;text-wrap:balance}
+.band{padding:clamp(20px,4vw,48px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+.top{background:#050706;color:#eef2ef;padding-bottom:0;border-bottom:1px solid var(--line)}
+.top h1{font-size:clamp(34px,6vw,52px)}
+.top p{color:#a3ada6;margin:6px 0 18px;max-width:60ch}
+.figs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid #26302a}
+.figs div{padding:14px 12px 16px 0}
+.figs b{display:block;font:600 clamp(28px,5.5vw,42px)/1 "Barlow Condensed",sans-serif;white-space:nowrap}.figs div:nth-child(2) b{color:var(--hot)}
+.figs span{font-size:13px;color:#8a958e}
+.figs .alert b{color:var(--alarm)}
+.tabs{display:flex;gap:2px;max-width:1240px;margin:0 auto;overflow-x:auto;scrollbar-width:none}
+.tabs a{flex:1 1 auto;white-space:nowrap;max-width:220px;text-align:center;padding:12px 3px;font-size:16px!important;color:#8a958e;text-decoration:none;font:600 18px "Barlow Condensed",sans-serif;border-radius:10px 10px 0 0;min-height:44px}
+.tabs a[aria-current=page]{background:var(--bg);color:var(--ink);box-shadow:inset 0 2px 0 var(--hot)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+input,select,button{font:inherit;font-size:16px;color:inherit}
+textarea{font:inherit;font-size:16px;color:inherit;width:100%;border:1px solid var(--line);background:var(--field);border-radius:10px;padding:8px 12px;margin-top:3px}
+input,select{min-height:44px;border:1px solid var(--line);background:var(--field);border-radius:10px;padding:8px 12px;width:100%}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--hot);outline-offset:2px}
+.bar input{flex:1 1 180px}.bar select{flex:0 1 150px;width:auto}
+@media(max-width:699px){.bar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.bar input{grid-column:1/-1}.bar select{width:100%}}
+button{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:8px 14px;cursor:pointer}
+button.go{background:var(--hot);border-color:var(--hot);color:#03140a;font-weight:600}
+button.ghost{background:none;border-color:transparent;color:var(--mute)}
+button.del{color:#c0392b}
+.note{font-size:14px;color:var(--mute);margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px}
+.spool{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;grid-template-columns:92px minmax(0,1fr);gap:14px;align-items:center}
+.spool svg{width:92px;height:92px;display:block}
+.spool h3{font-size:22px}
+.mat{display:inline-block;font:600 13px Barlow,sans-serif;background:var(--track);border-radius:6px;padding:1px 7px;margin-left:4px;vertical-align:3px}
+.sub{font-size:14px;color:var(--mute);margin:2px 0 8px}
+.meter{height:6px;background:var(--track);border-radius:3px;overflow:hidden}.meter i{display:block;height:100%;background:var(--hot);border-radius:3px}
+.meter.low i{background:var(--alarm)}
+.amt{font-size:14px;margin-top:4px;white-space:nowrap}.amt b{font-weight:600}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:13px;border-radius:6px;padding:1px 8px;background:var(--alarmbg);color:var(--alarmink)}.tag.w{background:var(--warnbg);color:var(--warn)}
+.acts{grid-column:1/-1;display:flex;gap:8px}.acts button{flex:1}
+.empty{grid-column:1/-1;text-align:center;padding:40px 16px;border:1px dashed var(--line);border-radius:14px;color:var(--mute)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 22px}
+.chips button{border-radius:22px}
+.chips button[aria-pressed=true]{background:var(--hot);color:#03140a;border-color:var(--hot);font-weight:600}
+.res{display:grid;gap:10px}
+.mrow{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.mrow.best{border:2px solid var(--hot)}
+.mhead{display:flex;align-items:baseline;gap:10px}
+.mhead h3{font-size:26px}.mhead .pct{margin-left:auto;font:600 22px "Barlow Condensed",sans-serif;white-space:nowrap}
+.badge{font-size:13px;background:var(--hot);color:#03140a;border-radius:6px;padding:1px 8px;font-weight:600}
+.specs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0;font-size:14px}
+.specs span{display:block;color:var(--mute);font-size:13px}.specs b{font-weight:600;white-space:nowrap}
+.why{font-size:15px;margin:0 0 8px}
+.stock{font-size:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;border:1px solid var(--line);vertical-align:-1px;margin-right:4px}
+.pill{background:var(--track);border-radius:6px;padding:1px 8px;white-space:nowrap}
+.none{color:var(--mute)}
+.shade{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;justify-content:center;z-index:9;padding:12px}
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;width:min(560px,100%);max-height:92vh;overflow:auto}
+.sheet h2{font-size:28px;margin-bottom:12px}
+.f2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+label{display:block;font-size:14px;color:var(--mute)}label input,label select{margin-top:3px;color:var(--ink)}
+input[type=color]{padding:4px;height:44px}
+.err{color:#d23b2a;font-size:14px;min-height:20px;margin:6px 0 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.row .sp{flex:1}
+.quick{display:flex;gap:8px;margin:10px 0}.quick button{flex:1}
+.toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#1b221e;border:1px solid var(--line);color:#eef2ef;border-radius:12px;padding:8px 8px 8px 16px;display:flex;gap:10px;align-items:center;z-index:8;width:max-content;max-width:calc(100% - 24px)}
+.toast button{background:none;border-color:#33413a;color:#fff}
+.calc{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+@media(min-width:820px){.calc{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}.out{position:sticky;top:12px}}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.box h3{font-size:20px;margin:0 0 10px}
+.box+.box{margin-top:12px}
+.inl{display:flex;gap:8px;align-items:flex-end}.inl label{flex:1}
+.chk{display:flex;gap:10px;align-items:center;min-height:44px;color:var(--ink);font-size:16px}.chk input{width:22px;height:22px;min-height:0;accent-color:var(--hot)}
+.out{background:var(--bed);color:#eef2ef;border-radius:14px;padding:18px;border:1px solid var(--line)}
+.out .big{font:600 clamp(44px,9vw,64px)/1 "Barlow Condensed",sans-serif;color:#fff;white-space:nowrap}
+.out .lbl{font-size:14px;color:#8a958e}
+.out .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0;padding:12px 0;border-block:1px solid #26302a}
+.out .two b{display:block;font:600 26px "Barlow Condensed",sans-serif;white-space:nowrap}
+.brk{display:grid;gap:8px;margin:6px 0 14px}
+.brk div{display:grid;grid-template-columns:minmax(0,7em) minmax(0,1fr) auto;gap:10px;align-items:center;font-size:14px}
+.brk i{display:block;height:8px;border-radius:4px;background:var(--hot)}.brk em{font-style:normal;white-space:nowrap;text-align:right}
+.brk .z{color:#6b766f}
+.out button{width:100%;background:none;color:#fff;border-color:#33413a}
+.out button.go{background:var(--hot);color:#03140a;border-color:var(--hot)}
+.plist{display:grid;gap:8px;margin-bottom:12px}
+.plist button{text-align:left;display:flex;justify-content:space-between;gap:8px}
+.plist button[aria-pressed=true]{border:2px solid var(--hot)}
+.plist small{color:var(--mute);white-space:nowrap}
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;max-height:300px;overflow:auto;padding:2px}
+.sw button{display:flex;align-items:center;gap:8px;text-align:left;font-size:15px;padding:6px 10px}
+.sw button i{flex:none;width:22px;height:22px;border-radius:50%;border:1px solid var(--line)}
+.sw button[aria-pressed=true]{border:2px solid var(--hot)}
+.groups{display:grid;gap:22px}
+.grp>h2{font-size:26px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-bottom:6px;border-bottom:2px solid var(--hot);margin-bottom:10px}
+.grp>h2 small{font:500 14px Barlow,sans-serif;color:var(--mute)}
+.sh{font:600 14px Barlow,sans-serif;color:var(--mute);margin:10px 0 8px;display:flex;align-items:center;gap:6px}
+.sh .ld{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.tag.on{background:light-dark(#e3f4ea,#10261a);color:var(--ok)}.tag.n{background:var(--track);color:var(--ink)}
+.spool.on{border-color:var(--ok);box-shadow:inset 3px 0 0 var(--ok)}
+.amsw{display:grid;gap:12px;margin-bottom:24px}
+.pc{background:var(--bed);color:#eef2ef;border-radius:14px;padding:14px;border:1px solid var(--line)}
+.pc h2{font-size:24px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px}.pc h2 small{font:500 13px Barlow,sans-serif;color:#8a958e;white-space:nowrap}
+.unit{display:grid;grid-template-columns:52px minmax(0,1fr);gap:8px;align-items:center;padding:8px 0;border-top:1px solid #26302a}
+.unit>b{font:600 15px "Barlow Condensed",sans-serif;color:#8a958e}
+.slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.slot{background:#1b221e;border:1px solid #2c3832;border-radius:10px;padding:6px 4px;text-align:center;font-size:13px;line-height:1.25;color:#eef2ef;min-height:84px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.slot.free{background:none;border-style:dashed;color:#6b766f;justify-content:center}
+.slot i{width:30px;height:30px;border-radius:50%;border:2px solid #2c3832;flex:none;position:relative}.slot i::after{content:'';position:absolute;inset:8px;border-radius:50%;background:#111513;border:1px solid #2c3832}
+.slot span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot em{font-style:normal;color:#8a958e;font-size:12px;white-space:nowrap}
+#l-slot .slot{background:var(--track);color:var(--ink);border-color:var(--line);min-height:70px}
+#l-slot .slot em{color:var(--mute)}
+#l-slot .slot[aria-pressed=true]{border:2px solid var(--hot)}
+.loose{font-size:14px;color:#f0b45a;padding-top:8px;border-top:1px solid #26302a}
+.imr{display:grid;gap:10px}
+.ir{border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;grid-template-columns:36px minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:end}
+.ir .on{accent-color:var(--hot);grid-row:span 3;align-self:start;width:28px;height:28px;margin:8px 0 0}
+.ir label{font-size:13px}.ir input,.ir select{min-height:40px;padding:6px 8px}
+.ir.off{opacity:.55}
+.busy{display:flex;gap:10px;align-items:center;padding:24px 0;justify-content:center;color:var(--mute)}
+.busy i{width:18px;height:18px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--hot);animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:14px;margin-bottom:16px}
+.wk{border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
+.wk .pc{border-radius:0}
+.hrs{font:600 clamp(30px,6vw,40px)/1 "Barlow Condensed",sans-serif;color:#fff;white-space:nowrap}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.pl{font-size:13px;border-radius:6px;padding:2px 8px;background:#1b221e;color:#c9d2cc;white-space:nowrap}
+.pl.ok{background:var(--hotbg);color:var(--hotink)}.pl.due{background:var(--alarmbg);color:var(--alarmink)}.pl.soon{background:#33280f;color:#f0b45a}
+.pc .acts2{display:flex;gap:8px}.pc .acts2 button{flex:1;background:none;color:#fff;border-color:#33413a}
+.tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.tr b{font-weight:600}.tn{all:unset;cursor:pointer;font-weight:600;display:block;min-height:24px}.tn:focus-visible{outline:2px solid var(--hot)}.tr small{display:block;font-size:13px;color:var(--mute);margin:1px 0 5px}
+.tr.due small{color:var(--alarmink)}.tr.due .meter i{background:var(--alarm)}.tr.soon small{color:var(--warn)}.tr.soon .meter i{background:var(--warn)}
+.tr button{min-height:40px;padding:6px 12px}
+.wcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px}
+.bh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}.bh h3{margin:0}
+.pr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.pr b{font-weight:600}.pr small{display:block;font-size:13px;color:var(--mute)}
+.qty{display:flex;align-items:center;gap:4px}.qty button{width:40px;min-height:40px;padding:0;font-size:20px}.qty span{min-width:34px;text-align:center;font:600 20px "Barlow Condensed",sans-serif}
+.kind{font:600 13px Barlow,sans-serif;color:var(--mute);margin:12px 0 2px}
+.pjl{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:12px}
+.pjc{display:block;text-align:left;width:100%;padding:14px 16px;border-radius:14px}
+.pjc b{font:600 22px "Barlow Condensed",sans-serif;display:block}.pjc small{display:block;color:var(--mute);font-size:14px;margin:2px 0 8px}
+.pjc .pills{margin:8px 0 0}
+.rq{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;padding:12px 0;border-top:1px solid var(--line)}
+.rq small,.ck small{display:block;font-size:13px;color:var(--mute)}.rq select{margin-top:8px}
+.ck{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;padding:12px 0;border-top:1px solid var(--line)}
+.ck input{width:24px;height:24px;min-height:0;accent-color:var(--hot);margin-top:2px}
+.ck.dn .tn{text-decoration:line-through;color:var(--mute)}
+.ck.bl{background:linear-gradient(90deg,var(--alarmbg),transparent)}
+.sw2{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;font-size:14px}.sw2 span{background:var(--track);border-radius:6px;padding:2px 8px}
+.pjk .kt{display:flex;flex-wrap:wrap;gap:8px 28px;margin:4px 0 10px}.kbig{display:block;font:600 clamp(34px,7vw,46px)/1 "Barlow Condensed",sans-serif;white-space:nowrap}
+.lbl2{font-size:13px;color:var(--mute)}
+.kt2{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px 0;border-block:1px solid var(--line);margin-bottom:12px}.kt2 b{display:block;font:600 20px "Barlow Condensed",sans-serif;white-space:nowrap}
+.brk.lt .z{color:var(--mute)}
+details{border-top:1px solid var(--line);padding:8px 0}summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;align-items:center}
+.kr{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:4px 0}.kr em{font-style:normal;white-space:nowrap}
+.steps{margin:0 0 6px;padding-left:20px;font-size:15px}.steps li{margin:4px 0}
+.top{padding-top:max(clamp(20px,4vw,48px),calc(env(safe-area-inset-top) + 12px))}
+.toast{bottom:calc(16px + env(safe-area-inset-bottom))}
+.save{padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+html{background:#050706}
+.save{font-size:13px;color:var(--mute);text-align:center;padding:0 16px 24px}
+@media(max-width:600px){.figs{grid-template-columns:repeat(2,minmax(0,1fr))}.specs{grid-template-columns:repeat(2,minmax(0,1fr))}.spool{grid-template-columns:76px minmax(0,1fr)}.spool svg{width:76px;height:76px}}
+@media(min-width:700px){.shade{align-items:center}}
+@media(prefers-reduced-motion:no-preference){.meter i{transition:width .4s ease}}
+</style>
+</head>
+<body>
+<header class="band top">
+<div class="wrap">
+<h1>Filamentregal<span style="color:var(--hot)">.</span></h1>
+<p>Dein Spulenlager mit Restmengen und Trocknungsstatus, einem Berater, der weiß, was du schon da hast, einem Kostenrechner pro Druck und einem Wartungsplan.</p>
+<div class="figs" id="figs"></div>
+</div>
+<nav class="tabs" aria-label="Bereiche"><a href="#lager" id="t-lager">Lager</a><a href="#berater" id="t-berater">Berater</a><a href="#kosten" id="t-kosten">Kosten</a><a href="#wartung" id="t-wartung">Wartung</a><a href="#projekte" id="t-projekte">Projekte</a></nav>
+</header>
+<main>
+<section class="band" id="v-lager"><div class="wrap">
+<div class="bar">
+<input id="q" type="search" placeholder="Farbe, Marke oder Ort" aria-label="Spulen durchsuchen">
+<select id="fm" aria-label="Nach Material filtern"></select>
+<select id="fs" aria-label="Nach Status filtern"><option value="">Alle Status</option><option value="geladen">Geladen</option><option value="lager">Im Lager</option></select>
+<button id="ph" hidden>Foto scannen</button><input type="file" id="phf" accept="image/*" multiple hidden><button id="bb">Bambu-Spule</button><button class="go" id="add">+ Spule</button>
+</div>
+<p class="note" id="sample" hidden>Das sind Beispielspulen, damit du siehst, wie es aussieht. <button class="ghost" id="clr" style="min-height:auto;padding:0;text-decoration:underline">Beispiele entfernen</button></p>
+<div id="ams"></div>
+<div class="groups" id="grid"></div>
+<section class="box" style="margin-top:22px"><h3>Daten sichern</h3><p class="note" style="margin:0 0 10px">Ein Backup enthält Lager, Drucker, Wartung und Projekte. So ziehst du auch auf ein anderes Gerät oder in die iPhone-Version um.</p>
+<div class="row" style="margin:0"><button type="button" id="ex" style="flex:1">Backup exportieren</button><button type="button" id="imb" style="flex:1">Backup importieren</button></div><input type="file" id="imf2" accept=".json,application/json,text/plain" hidden>
+<textarea id="extxt" rows="3" hidden style="margin-top:10px"></textarea><p class="err" id="ex-err" role="alert"></p></section>
+</div></section>
+<section class="band" id="v-berater" hidden><div class="wrap">
+<h2 style="font-size:clamp(28px,5vw,40px)">Was muss dein Teil können?</h2>
+<div class="chips" id="chips"></div>
+<div class="res" id="res"></div>
+<p class="note" style="margin-top:16px">Werte sind typische Richtwerte. Die Angaben auf deiner Spule gehen immer vor. Lebensmittelkontakt: FDM-Teile haben Rillen, in denen Bakterien sitzen können. Selbst mit zertifiziertem Filament gilt das nur für kurzen, trockenen Kontakt.</p>
+</div></section>
+<section class="band" id="v-kosten" hidden><div class="wrap">
+<div class="calc">
+<div>
+<div class="box"><h3>Druck</h3>
+<div class="inl"><label>Drucker<select id="c-pr"></select></label><button type="button" id="c-prm">Drucker verwalten</button></div>
+<label style="margin-top:10px">Filament<select id="c-sp"></select></label>
+<label id="c-kgw" style="margin-top:10px" hidden>Preis pro kg (€)<input id="c-kg" type="number" inputmode="decimal" min="0" step="0.01" value="22"></label>
+<div class="f2" style="margin-top:10px">
+<label>Filament (g)<input id="c-g" type="number" inputmode="decimal" min="0" step="0.1" value="45"></label>
+<label>Teile auf der Platte<input id="c-n" type="number" inputmode="numeric" min="1" step="1" value="1"></label>
+<label>Druckzeit (h)<input id="c-h" type="number" inputmode="numeric" min="0" step="1" value="2"></label>
+<label>Druckzeit (min)<input id="c-m" type="number" inputmode="numeric" min="0" max="59" step="1" value="30"></label>
+</div>
+<p class="err" id="c-err" role="alert"></p>
+</div>
+<div class="box"><h3>Zuschläge</h3>
+<div class="f2">
+<label>Strompreis (€/kWh)<input id="c-kwh" type="number" inputmode="decimal" min="0" step="0.01"></label>
+<label>Fehldruck-Puffer (%)<input id="c-fail" type="number" inputmode="numeric" min="0" step="1"></label>
+<label>Arbeitszeit (min)<input id="c-lab" type="number" inputmode="numeric" min="0" step="1" value="0"></label>
+<label>Stundensatz (€/h)<input id="c-rate" type="number" inputmode="decimal" min="0" step="0.5"></label>
+<label>Gewinnaufschlag (%)<input id="c-mar" type="number" inputmode="numeric" min="0" step="1"></label>
+</div>
+<label class="chk"><input type="checkbox" id="c-dep"> Abschreibung des Druckers einrechnen</label>
+</div>
+</div>
+<div class="out" id="out" aria-live="polite"></div>
+</div>
+</div></section>
+<section class="band" id="v-projekte" hidden><div class="wrap">
+<div class="bh" id="pjtop" style="margin-bottom:12px"><h2 style="font-size:clamp(28px,5vw,40px)">Druckprojekte</h2><button type="button" class="go" id="pjadd">+ Projekt</button></div>
+<div class="pjl" id="pjl"></div>
+<div id="pjd"></div>
+</div></section>
+<section class="band" id="v-wartung" hidden><div class="wrap">
+<div id="wp" class="wgrid"></div>
+<div class="wcols">
+<section class="box"><div class="bh"><h3>Ersatzteile</h3><button type="button" class="go" data-w="addp">+ Ersatzteil</button></div><div id="wparts"></div></section>
+<section class="box"><div class="bh"><h3>Zubehör</h3><button type="button" class="go" data-w="adda">+ Zubehör</button></div><div id="wacc"></div></section>
+</div>
+<p class="note" style="margin-top:14px">Tipp auf eine Aufgabe, um Namen und Intervall zu ändern. Die Wartungsintervalle sind Richtwerte zum Start. Pass sie an die Empfehlungen im Bambu-Wiki für dein Modell an. Mit „Druck verbuchen“ im Kosten-Tab zählen die Betriebsstunden von Drucker, Platte und Düse automatisch mit.</p>
+</div></section>
+</main>
+<p class="save" id="save"></p>
+<div class="shade" id="ed" hidden><form class="sheet" id="f" novalidate>
+<h2 id="edh">Neue Spule</h2>
+<div class="f2">
+<label>Material<select id="e-mat"></select></label>
+<label>Marke<input id="e-brand" placeholder="Polymaker"></label>
+<label>Farbname<input id="e-col" placeholder="Galaxy Schwarz"></label>
+<label>Farbe<input id="e-hex" type="color" value="#ff5a1f"></label>
+<label>Netto (g)<input id="e-net" type="number" inputmode="numeric" min="1" step="1" value="1000"></label>
+<label>Rest (g)<input id="e-rest" type="number" inputmode="numeric" min="0" step="1" value="1000"></label>
+<label>Preis (€)<input id="e-price" type="number" inputmode="decimal" min="0" step="0.01" placeholder="22"></label>
+<label>Zuletzt getrocknet<input id="e-dry" type="date"></label>
+</div>
+<div class="f2" style="margin-top:10px"><label>Art<select id="e-kind"><option value="spool">Mit Spule</option><option value="refill">Refill</option></select></label><label>Status<select id="e-st"><option value="lager">Im Lager</option><option value="geladen">Aktuell geladen</option></select></label></div>
+<label style="margin-top:10px">Lagerort<input id="e-place" placeholder="Trockenbox 1"></label>
+<p class="err" id="e-err" role="alert"></p>
+<div class="row"><button type="button" class="del" id="e-del">Löschen</button><span class="sp"></span><button type="button" id="e-x">Abbrechen</button><button class="go" type="submit">Speichern</button></div>
+</form></div>
+<div class="shade" id="us" hidden><form class="sheet" id="uf" novalidate>
+<h2 id="ush">Verbrauch</h2>
+<p class="note" id="usn" style="margin:0"></p>
+<div class="quick"><button type="button" data-g="10">10 g</button><button type="button" data-g="50">50 g</button><button type="button" data-g="100">100 g</button></div>
+<label>Verbraucht (g)<input id="u-g" type="number" inputmode="numeric" min="1" step="1"></label>
+<p class="err" id="u-err" role="alert"></p>
+<div class="row"><span class="sp"></span><button type="button" id="u-x">Abbrechen</button><button class="go" type="submit">Abziehen</button></div>
+</form></div>
+<div class="shade" id="pm" hidden><form class="sheet" id="pf" novalidate>
+<h2>Drucker</h2>
+<div class="plist" id="plist"></div>
+<div class="f2">
+<label style="grid-column:1/-1">Name<input id="p-name" placeholder="Bambu Lab P1S"></label>
+<label>Kaufpreis (€)<input id="p-price" type="number" inputmode="decimal" min="0" step="1"></label>
+<label>Lebensdauer (h)<input id="p-life" type="number" inputmode="numeric" min="1" step="100"></label>
+<label>Ø Leistung (W)<input id="p-watt" type="number" inputmode="numeric" min="0" step="1"></label>
+<label>Verschleiß (€/h)<input id="p-wear" type="number" inputmode="decimal" min="0" step="0.01"></label>
+<label>Slots pro AMS<select id="p-slots"><option value="4">4 Slots</option><option value="8">8 Slots</option></select></label>
+<label>Anzahl AMS<select id="p-ams"><option value="0">Kein AMS</option><option value="1">1 AMS</option><option value="2">2 AMS</option><option value="3">3 AMS</option><option value="4">4 AMS</option></select></label>
+</div>
+<p class="note" style="margin:8px 0 0">Ø Leistung: Mittelwert beim Drucken, nicht das Netzteil-Maximum. Abschreibung = Kaufpreis ÷ Lebensdauer.</p>
+<p class="err" id="p-err" role="alert"></p>
+<div class="row"><button type="button" class="del" id="p-del">Löschen</button><button type="button" id="p-new">+ Neu</button><span class="sp"></span><button type="button" id="p-x">Fertig</button><button class="go" type="submit">Speichern</button></div>
+</form></div>
+<div class="shade" id="bm" hidden><form class="sheet" id="bf" novalidate>
+<h2>Bambu-Spule</h2>
+<div class="chips" id="b-prod" style="margin:0 0 12px"></div>
+<div class="sw" id="b-col"></div>
+<div class="f2" style="margin-top:12px">
+<label>Preis (€)<input id="b-price" type="number" inputmode="decimal" min="0" step="0.01"></label>
+<label>Anzahl<input id="b-n" type="number" inputmode="numeric" min="1" max="20" step="1" value="1"></label>
+<label>Status<select id="b-st"><option value="lager">Im Lager</option><option value="geladen">Aktuell geladen</option></select></label>
+<label>Lagerort<input id="b-place" placeholder="AMS"></label>
+<label class="chk" style="align-self:end"><input type="checkbox" id="b-ref"> Refill ohne Spule</label>
+</div>
+<p class="note" style="margin:8px 0 0">Listenpreise aus dem EU-Store, Rabatte nicht eingerechnet. Farben wie auf dem Etikett.</p>
+<p class="err" id="b-err" role="alert"></p>
+<div class="row"><span class="sp"></span><button type="button" id="b-x">Abbrechen</button><button class="go" type="submit" id="b-go">Hinzufügen</button></div>
+</form></div>
+<div class="shade" id="ld" hidden><form class="sheet" id="lf" novalidate>
+<h2 id="ldh">Laden</h2>
+<div class="f2"><label>Drucker<select id="l-pr"></select></label><label>Einheit<select id="l-ams"></select></label></div>
+<div class="slots" id="l-slot" style="margin-top:12px"></div>
+<p class="err" id="l-err" role="alert"></p>
+<div class="row"><span class="sp"></span><button type="button" id="l-x">Abbrechen</button><button class="go" type="submit">Laden</button></div>
+</form></div>
+<div class="shade" id="im" hidden><form class="sheet" id="imf" novalidate>
+<h2>Vom Foto erkannt</h2>
+<p class="note" id="ims" style="margin:0 0 10px"></p>
+<div id="imr" class="imr"></div>
+<p class="err" id="im-err" role="alert"></p>
+<div class="row"><span class="sp"></span><button type="button" id="im-x">Abbrechen</button><button class="go" type="submit" id="im-go">Übernehmen</button></div>
+</form></div>
+<div class="shade" id="gs" hidden><form class="sheet" id="gf" novalidate>
+<h2 id="gh"></h2>
+<div class="f2" id="gfields"></div>
+<p class="err" id="g-err" role="alert"></p>
+<div class="row"><button type="button" class="del" id="g-del">Löschen</button><span class="sp"></span><button type="button" id="g-x">Abbrechen</button><button class="go" type="submit" id="g-ok">Speichern</button></div>
+</form></div>
+<datalist id="dl-parts"><option>Düse 0,4 mm gehärtet</option><option>Düse 0,2 mm</option><option>Düse 0,6 mm</option><option>Hotend komplett</option><option>Düsenabstreifer (Wiper)</option><option>Filament-Schneidmesser</option><option>Zahnriemen</option><option>PTFE-Schlauch</option><option>Hotend-Lüfter</option><option>Bauteillüfter</option><option>AMS-Trockenmittel</option><option>Silikonsocke Hotend</option></datalist>
+<datalist id="dl-acc"><option>Textured PEI Plate</option><option>Cool Plate SuperTack</option><option>Engineering Plate</option><option>High Temp Plate</option><option>Smooth PEI Plate</option><option>Hotend 0,4 mm gehärtet</option><option>Hotend 0,2 mm</option><option>Hotend 0,6 mm</option><option>Hotend 0,8 mm</option></datalist>
+<div class="shade" id="pj" hidden><form class="sheet" id="pjf" novalidate>
+<h2>Neues Projekt</h2>
+<label>Name<input id="pj-name" placeholder="Drache mit Gelenken"></label>
+<label style="margin-top:10px">MakerWorld-Link (optional)<input id="pj-link" type="url" inputmode="url" placeholder="https://makerworld.com/de/models/…"></label>
+<label style="margin-top:10px">Drucker<select id="pj-pr"></select></label>
+<div class="box" style="margin-top:12px;padding:12px"><b>3MF-Datei importieren</b><p class="note" style="margin:4px 0 8px">Am genauesten: 3MF von MakerWorld herunterladen oder aus Bambu Studio speichern. Geslicte Dateien liefern Platten, Zeiten, Farben und Gramm.</p><button type="button" class="go" id="pj-3mf" style="width:100%">3MF-Datei wählen</button><input type="file" id="pj-3f" accept=".3mf,model/3mf,application/vnd.ms-package.3dmanufacturing-3dmodel+xml,application/octet-stream" hidden></div>
+<div id="pj-sc" hidden><p class="note" style="margin:12px 0 8px"><b style="color:var(--ink)">Oder per Screenshot:</b> über deinen Kurzbefehl auswerten lassen.</p><button type="button" id="pj-scb" style="width:100%">Per Kurzbefehl scannen</button></div>
+<div id="pj-ai"><p class="note" style="margin:12px 0 8px"><b style="color:var(--ink)">Oder per Screenshot:</b> Lade Screenshots der Profilseite auf MakerWorld oder der geslicten Platten aus Bambu Studio hoch, also dort, wo Filamente, Gramm und Druckzeit pro Platte stehen. Alternativ kannst du den Text einfügen.</p>
+<div class="row" style="margin:0"><button type="button" id="pj-img">Screenshots wählen</button><span id="pj-n" class="note" style="margin:0;align-self:center"></span></div>
+<input type="file" id="pj-f" accept="image/*" multiple hidden>
+<label style="margin-top:10px">Oder Text einfügen<textarea id="pj-txt" rows="3" placeholder="Platte 1: 2 h 10 min, PLA Basic Jade White 45 g, Bambu Green 12 g …"></textarea></label></div>
+<p class="err" id="pj-err" role="alert"></p>
+<div class="row"><button type="button" id="pj-man">Manuell anlegen</button><span class="sp"></span><button type="button" id="pj-x">Abbrechen</button><button class="go" type="submit" id="pj-go">Auslesen</button></div>
+</form></div>
+<div class="shade" id="sc" hidden><div class="sheet">
+<h2 id="sch">Per Kurzbefehl scannen</h2>
+<ol class="steps"><li><b>Kurzbefehl starten:</b> Foto oder Screenshot wählen, das iPhone liest den Text und ChatGPT macht daraus die Daten.</li><li><b>Zurück zur App:</b> oben links auf „◀ Filamentregal“ tippen.</li><li><b>Ergebnis einfügen</b> antippen.</li></ol>
+<div class="row" style="margin-top:6px"><button type="button" class="go" id="sc-run" style="flex:1">Kurzbefehl starten</button><button type="button" id="sc-paste" style="flex:1">Ergebnis einfügen</button></div>
+<details style="margin-top:10px"><summary>Ohne Kurzbefehl, mit Claude- oder ChatGPT-App</summary><p class="note" style="margin:6px 0">Auftrag kopieren, in der KI-App zusammen mit dem Foto einfügen, die Antwort kopieren und hier einfügen.</p><button type="button" id="sc-copy">Auftrag kopieren</button><label style="margin-top:10px">Antwort hier einfügen<textarea id="sc-txt" rows="4" placeholder='{"type":"spulen","items":[…]}'></textarea></label><button type="button" id="sc-ok" style="margin-top:8px">Übernehmen</button></details>
+<p class="err" id="sc-err" role="alert"></p>
+<div class="row"><span class="sp"></span><button type="button" id="sc-x">Schließen</button></div>
+</div></div>
+<div class="toast" id="toast" hidden><span id="tt"></span><button id="undo">Rückgängig</button></div>
+<script type="application/json" id="state" data-own>{"ts":1,"sample":false,"spools":[],"printers":[{"id":"p1","name":"Bambu Lab P1S","price":700,"life":4000,"watt":105,"wear":0.1,"ams":1,"slots":4},{"id":"pmwphrrhd","name":"Babulab h3c","price":2800,"life":4000,"watt":120,"wear":0.1,"ams":1,"slots":8}],"cfg":{"kwh":0.35,"fail":10,"rate":20,"mar":0,"dep":true,"pr":"pmwphrrhd"},"projects":[],"maint":[],"parts":[],"acc":[]}</script>
+<script data-own>
+{
+const $=s=>document.querySelector(s);
+const HEAD=document.head.cloneNode(true),BODY=document.body.cloneNode(true);
+for(const n of [...HEAD.querySelectorAll('script:not([data-own])'),...BODY.querySelectorAll('script:not([data-own])')])n.remove();
+const PWA=true;
+const KEY='filamentregal-v2';
+let S=JSON.parse($('#state').textContent);
+const EMB=S.ts;
+try{const l=JSON.parse(localStorage.getItem(KEY));if(l&&l.base===EMB&&l.s&&l.s.ts>EMB)S=l.s}catch(e){}
+if(!S.printers||!S.printers.length)S.printers=[{id:'p1',name:'Bambu Lab P1S',price:700,life:4000,watt:105,wear:0.1}];
+for(const sp of S.spools){sp.kind=sp.kind||'spool';sp.status=sp.status||'lager'}
+for(const p of S.printers){if(p.ams===undefined)p.ams=1;if(!p.slots)p.slots=4}
+const SL=p=>(p&&p.slots)||4;
+const today=()=>new Date().toISOString().slice(0,10);
+const MT=[['Druckplatte reinigen',50,0],['Stangen und Linearachsen reinigen',100,0],['Lüfter und Hotend entstauben',300,0],['Z-Spindeln schmieren',500,90],['Riemenspannung prüfen',0,90],['Düse prüfen',500,0],['AMS-Trockenmittel wechseln',0,30]];
+S.projects=S.projects||[];S.maint=S.maint||[];S.parts=S.parts||[];S.acc=S.acc||[];
+function mInit(p){if(p.mi)return;p.mi=1;p.hours=p.hours||0;for(const [n,h,d] of MT)S.maint.push({id:'t'+Math.random().toString(36).slice(2,9),printer:p.id,name:n,h,d,lastH:p.hours,lastD:today()})}
+for(const p of S.printers)mInit(p);
+S.cfg=Object.assign({kwh:0.35,fail:10,rate:20,mar:0,dep:true,pr:'p1'},S.cfg||{});
+const M=[
+{k:'PLA',noz:'200–220 °C',bed:'50–60 °C',enc:'nein',dry:'45 °C · 4 h',hyg:false,tip:'Der Alleskönner für Deko, Prototypen und feine Details. Wird ab etwa 55 °C weich, also nicht ins Auto in der Sonne.',s:{out:0,heat:0,flex:0,tough:1,easy:3,food:1,chem:0,detail:3,noenc:3,stiff:2}},
+{k:'PETG',noz:'230–250 °C',bed:'70–85 °C',enc:'nein',dry:'65 °C · 4–6 h',hyg:true,tip:'Zäh, wetterfest und bis etwa 75 °C stabil. Neigt zu Stringing, langsamer Lüfter und Retraction helfen.',s:{out:2,heat:1,flex:0,tough:2,easy:2,food:2,chem:2,detail:2,noenc:3,stiff:1}},
+{k:'ABS',noz:'240–260 °C',bed:'95–110 °C',enc:'ja',dry:'80 °C · 4 h',hyg:false,tip:'Hitzefest bis etwa 95 °C und mit Aceton glättbar. Warpt ohne geschlossenen Bauraum, Dämpfe ablüften.',s:{out:1,heat:2,flex:0,tough:2,easy:1,food:0,chem:1,detail:2,noenc:0,stiff:1}},
+{k:'ASA',noz:'240–260 °C',bed:'90–110 °C',enc:'empfohlen',dry:'80 °C · 4 h',hyg:false,tip:'Das bessere ABS für draußen: UV-beständig, vergilbt kaum. Für Gartenteile, Halter am Balkon, Autoteile.',s:{out:3,heat:2,flex:0,tough:2,easy:1,food:0,chem:2,detail:2,noenc:1,stiff:1}},
+{k:'TPU',noz:'220–240 °C',bed:'40–60 °C',enc:'nein',dry:'50 °C · 4–6 h',hyg:true,tip:'Gummiartig und fast unzerstörbar. Langsam drucken (20–30 mm/s), am besten mit Direct Drive.',s:{out:2,heat:1,flex:3,tough:3,easy:0,food:1,chem:2,detail:1,noenc:3,stiff:0}},
+{k:'PA',noz:'250–280 °C',bed:'70–90 °C',enc:'ja',dry:'75 °C · 8–12 h',hyg:true,tip:'Nylon für Zahnräder, Scharniere und Gleitteile. Extrem zäh, zieht aber Wasser wie ein Schwamm, also immer aus der Trockenbox drucken.',s:{out:1,heat:3,flex:1,tough:3,easy:0,food:0,chem:3,detail:1,noenc:0,stiff:1}},
+{k:'PC',noz:'260–300 °C',bed:'100–120 °C',enc:'ja',dry:'85 °C · 6 h',hyg:true,tip:'Sehr schlagfest und bis über 110 °C formstabil. Braucht Ganzmetall-Hotend und warmen Bauraum.',s:{out:2,heat:3,flex:0,tough:3,easy:0,food:0,chem:2,detail:1,noenc:0,stiff:2}},
+{k:'PETG-CF',noz:'240–260 °C',bed:'70–85 °C',enc:'nein',dry:'65 °C · 6 h',hyg:true,tip:'Steif, matt und verzugsarm, die Schichten sieht man kaum. Braucht eine gehärtete Düse, Messing wird abgeschliffen.',s:{out:2,heat:2,flex:0,tough:2,easy:2,food:0,chem:2,detail:2,noenc:3,stiff:3}}];
+const C=[['out','Draußen / UV'],['heat','Hitzefest'],['flex','Flexibel'],['tough','Schlagfest'],['stiff','Steif'],['chem','Chemikalien'],['detail','Feine Optik'],['easy','Einfach zu drucken'],['noenc','Ohne Gehäuse'],['food','Lebensmittelkontakt']];
+const sel=new Set();
+const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const g=n=>Math.round(n).toLocaleString('de-DE');
+const LOW=150;
+const days=d=>d?Math.floor((Date.now()-Date.parse(d))/864e5):null;
+const mat=k=>M.find(m=>m.k===k);
+function figs(){const sp=S.spools,tot=sp.reduce((a,s)=>a+s.rest,0),val=sp.reduce((a,s)=>a+(s.price&&s.net?s.price*s.rest/s.net:0),0),low=sp.filter(s=>s.rest<LOW).length;
+$('#figs').innerHTML=`<div><b>${sp.length}</b><span>Spulen</span></div><div><b>${(tot/1000).toLocaleString('de-DE',{maximumFractionDigits:1})} kg</b><span>Filament übrig</span></div><div><b>${Math.round(val)} €</b><span>Restwert</span></div><div class="${low?'alert':''}"><b>${low}</b><span>fast leer</span></div>`}
+function svg(s){const p=Math.max(0,Math.min(1,s.rest/s.net)),r=34,c=2*Math.PI*r;
+return `<svg viewBox="0 0 92 92" aria-hidden="true"><circle cx="46" cy="46" r="44" fill="var(--track)"/><circle cx="46" cy="46" r="${r}" fill="none" stroke="${esc(s.hex)}" stroke-width="16" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 46 46)"/><circle cx="46" cy="46" r="44" fill="none" stroke="var(--line)"/><circle cx="46" cy="46" r="18" fill="var(--card)" stroke="var(--line)"/><circle cx="46" cy="46" r="7" fill="var(--track)"/></svg>`}
+function card(s){const p=s.net?Math.min(100,s.rest/s.net*100):0,m=mat(s.material),d=days(s.dried),tags=[];
+if(s.status==='geladen')tags.push(`<span class="tag on">${locTxt(s)||'Geladen'}</span>`);tags.push(`<span class="tag n">${s.kind==='refill'?'Refill':'Mit Spule'}</span>`);
+if(s.rest<LOW)tags.push('<span class="tag">Fast leer</span>');
+if(m&&m.hyg&&(d===null||d>30))tags.push(`<span class="tag w">Trocknen empfohlen${d!==null?' · '+d+' Tage her':''}</span>`);
+return `<article class="spool${s.status==='geladen'?' on':''}">${svg(s)}<div><h3>${esc(s.color)}<span class="mat">${esc(s.material)}</span></h3><p class="sub">${esc([s.brand,s.place].filter(Boolean).join(' · '))||'&nbsp;'}</p><div class="meter${s.rest<LOW?' low':''}"><i style="width:${p.toFixed(1)}%"></i></div><div class="amt"><b>${g(s.rest)} g</b> von ${g(s.net)} g</div>${tags.length?'<div class="tags">'+tags.join('')+'</div>':''}</div><div class="acts"><button data-a="use" data-id="${s.id}">Verbrauch</button><button data-a="st" data-id="${s.id}">${s.status==='geladen'?'Entladen':'Laden'}</button><button data-a="edit" data-id="${s.id}">Bearbeiten</button></div></article>`}
+function grid(){const q=$('#q').value.trim().toLowerCase(),f=$('#fm').value,fs=$('#fs').value;
+const l=S.spools.filter(s=>(!f||s.material===f)&&(!fs||s.status===fs)&&(!q||[s.color,s.brand,s.place,s.material,s.kind==='refill'?'refill':'spule'].join(' ').toLowerCase().includes(q)));
+const mats=[...new Set(l.map(s=>s.material))].sort();
+const sub=(arr,t,dot)=>arr.length?`<h3 class="sh">${dot?'<span class="ld"></span>':''}${t} · ${arr.length}</h3><div class="grid">${arr.sort((a,b)=>a.color.localeCompare(b.color)||a.rest-b.rest).map(card).join('')}</div>`:'';
+$('#grid').innerHTML=l.length?mats.map(m=>{const a=l.filter(s=>s.material===m),on=a.filter(s=>s.status==='geladen'),off=a.filter(s=>s.status!=='geladen'),kg=a.reduce((x,s)=>x+s.rest,0)/1000;
+return `<section class="grp"><h2>${esc(m)}<small>${a.length} ${a.length===1?'Rolle':'Rollen'} · ${kg.toLocaleString('de-DE',{maximumFractionDigits:1})} kg</small></h2>${sub(on,'Aktuell geladen',1)}${sub(off,'Im Lager',0)}</section>`}).join(''):(S.spools.length?'<div class="empty">Keine Spule passt zu deiner Suche.</div>':'<div class="empty"><b style="color:var(--ink)">Dein Regal ist leer</b><br>Trag deine erste Spule ein, dann rechnet der Berater auch mit deinem Bestand.</div>');
+$('#sample').hidden=!S.sample}
+function adv(){const ch=$('#chips');if(!ch.children.length)ch.innerHTML=C.map(([k,l])=>`<button type="button" data-k="${k}" aria-pressed="false">${l}</button>`).join('');
+for(const b of ch.children)b.setAttribute('aria-pressed',sel.has(b.dataset.k));
+const res=$('#res');if(!sel.size){res.innerHTML='<div class="empty">Tippe oben an, was wichtig ist. Die Materialien werden dann nach Eignung sortiert, und du siehst gleich, was davon im Regal liegt.</div>';return}
+const r=M.map(m=>({m,sc:Math.round([...sel].reduce((a,k)=>a+m.s[k],0)/(sel.size*3)*100)})).sort((a,b)=>b.sc-a.sc);
+res.innerHTML=r.map(({m,sc},i)=>{const st=S.spools.filter(s=>s.material===m.k&&s.rest>0);
+const stock=st.length?'Im Regal: '+st.map(s=>`<span class="pill"><span class="dot" style="background:${esc(s.hex)}"></span>${esc(s.color)} · ${g(s.rest)} g</span>`).join(''):'<span class="none">Nicht im Regal</span>';
+return `<div class="mrow${i===0?' best':''}"><div class="mhead"><h3>${m.k}</h3>${i===0?'<span class="badge">Beste Wahl</span>':''}<span class="pct">${sc} %</span></div><div class="meter" style="margin-top:8px"><i style="width:${sc}%;background:${i===0?'var(--hot)':'var(--mute)'}"></i></div><div class="specs"><div><span>Düse</span><b>${m.noz}</b></div><div><span>Bett</span><b>${m.bed}</b></div><div><span>Gehäuse</span><b>${m.enc}</b></div><div><span>Trocknen</span><b>${m.dry}</b></div></div><p class="why">${m.tip}</p><div class="stock">${stock}</div></div>`}).join('')}
+function view(){const v=['berater','kosten','wartung','projekte'].includes(location.hash.slice(1))?location.hash.slice(1):'lager';
+for(const k of ['lager','berater','kosten','wartung','projekte']){$('#v-'+k).hidden=k!==v;const t=$('#t-'+k);k===v?t.setAttribute('aria-current','page'):t.removeAttribute('aria-current')}}
+const eur=n=>n.toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+const DK='filamentregal-calc';
+let D={sp:'',g:45,n:1,h:2,m:30,lab:0,kg:22};
+try{Object.assign(D,JSON.parse(localStorage.getItem(DK))||{})}catch(e){}
+const num=id=>{const v=parseFloat(String($(id).value).replace(',','.'));return isFinite(v)?v:NaN};
+function calcFill(){const pr=$('#c-pr');pr.innerHTML=S.printers.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');if(!S.printers.some(p=>p.id===S.cfg.pr))S.cfg.pr=S.printers[0].id;pr.value=S.cfg.pr;
+const sp=$('#c-sp');sp.innerHTML=S.spools.filter(s=>s.price&&s.net).map(s=>`<option value="${s.id}">${esc(s.color)} · ${esc(s.material)} · ${eur(s.price/s.net*1000)}/kg · ${g(s.rest)} g übrig</option>`).join('')+'<option value="">Eigener Preis pro kg</option>';
+sp.value=S.spools.some(s=>s.id===D.sp&&s.price)?D.sp:(D.sp===''&&sp.options.length>1&&!D.init?sp.options[0].value:'');D.init=1;D.sp=sp.value;
+for(const k of ['g','n','h','m','lab','kg'])$('#c-'+k).value=D[k];
+for(const k of ['kwh','fail','rate','mar'])$('#c-'+k).value=S.cfg[k];$('#c-dep').checked=!!S.cfg.dep;calc()}
+function calc(){const p=S.printers.find(x=>x.id=== $('#c-pr').value)||S.printers[0],sp=S.spools.find(s=>s.id===$('#c-sp').value);
+$('#c-kgw').hidden=!!sp;
+const gr=num('#c-g'),n=Math.max(1,Math.round(num('#c-n')||1)),hrs=(num('#c-h')||0)+(num('#c-m')||0)/60,kwh=num('#c-kwh')||0,fail=num('#c-fail')||0,lab=num('#c-lab')||0,rate=num('#c-rate')||0,mar=num('#c-mar')||0;
+const ppg=sp?sp.price/sp.net:(num('#c-kg')||0)/1000;
+const err=!(gr>0)?'Gib die Filamentmenge aus dem Slicer ein.':!(hrs>0)?'Gib die Druckzeit ein.':'';$('#c-err').textContent=err;
+if(err){$('#out').innerHTML='<div class="lbl">Kosten</div><div class="big">–</div><p class="lbl">Sobald Gramm und Druckzeit drinstehen, siehst du hier das Ergebnis.</p>';return}
+const parts=[['Material',gr*ppg],['Strom',hrs*p.watt/1000*kwh],['Verschleiß',hrs*p.wear],['Abschreibung',$('#c-dep').checked&&p.life?hrs*p.price/p.life:0]];
+parts.push(['Fehldruck',(parts[0][1]+parts[1][1])*fail/100],['Arbeit',lab/60*rate]);
+const cost=parts.reduce((a,x)=>a+x[1],0),sale=cost*(1+mar/100),mx=Math.max(...parts.map(x=>x[1]),0.0001);
+$('#out').innerHTML=`<div class="lbl">Kosten gesamt · ${esc(p.name)}</div><div class="big">${eur(cost)}</div>
+<div class="two"><div><span class="lbl">Pro Teil (${n})</span><b>${eur(cost/n)}</b></div><div><span class="lbl">${mar>0?'Verkaufspreis pro Teil':'Pro Druckstunde'}</span><b>${mar>0?eur(sale/n):eur(cost/hrs)}</b></div></div>
+<div class="brk">${parts.map(([l,v])=>`<div class="${v<0.005?'z':''}"><span>${l}</span><span><i style="width:${(v/mx*100).toFixed(1)}%"></i></span><em>${eur(v)}</em></div>`).join('')}${mar>0?`<div><span>Gewinn</span><span></span><em>${eur(sale-cost)}</em></div>`:''}</div>
+<button class="go" id="c-ded" type="button">Druck verbuchen</button><p class="lbl" style="margin:8px 0 0;text-align:center">${sp?`${g(gr)} g von „${esc(sp.color)}“ abziehen · `:''}${(Math.round(hrs*10)/10).toLocaleString('de-DE')} h auf ${esc(p.name)} buchen</p>`}
+function draft(){D.sp=$('#c-sp').value;for(const k of ['g','n','h','m','lab','kg'])D[k]=$('#c-'+k).value;try{localStorage.setItem(DK,JSON.stringify(D))}catch(e){}}
+const prOf=s=>S.printers.find(p=>p.id===s.printer);
+const locTxt=s=>{const p=prOf(s);if(s.status!=='geladen'||!p)return '';return esc(p.name)+' · '+(s.ams?'AMS '+s.ams+' · Slot '+s.slot:'Extern')};
+const at=(pid,u,sl)=>S.spools.find(s=>s.status==='geladen'&&s.printer===pid&&+s.ams===u&&+s.slot===sl);
+function slotCell(s,lab){return s?`<button type="button" class="slot" data-ed="${s.id}" aria-label="${esc(s.color)} öffnen"><i style="background:${esc(s.hex)}"></i><span>${esc(s.color)}</span><em>${esc(s.material)} · ${g(s.rest)} g</em></button>`:`<div class="slot free">${lab}<br>frei</div>`}
+function ams(){const any=S.spools.some(s=>s.status==='geladen');
+if(!any){$('#ams').innerHTML='';return}
+$('#ams').innerHTML='<div class="amsw">'+S.printers.map(p=>{const ld=S.spools.filter(s=>s.status==='geladen'&&s.printer===p.id);
+let h='';for(let u=1;u<=p.ams;u++)h+=`<div class="unit"><b>AMS ${u}</b><div class="slots">${[...Array(SL(p))].map((_,i)=>i+1).map(sl=>slotCell(at(p.id,u,sl),'Slot '+sl)).join('')}</div></div>`;
+h+=`<div class="unit"><b>Extern</b><div class="slots">${slotCell(at(p.id,0,1),'Halter')}</div></div>`;
+return `<section class="pc"><h2>${esc(p.name)}<small>${ld.length} geladen</small></h2>${h}</section>`}).join('')+
+(()=>{const lo=S.spools.filter(s=>s.status==='geladen'&&!prOf(s));return lo.length?`<div class="pc"><div class="loose" style="border:0;padding:0">Geladen, aber ohne Platz: ${lo.map(s=>`<button type="button" class="ghost" data-ld="${s.id}" style="color:#f0b45a;text-decoration:underline">${esc(s.color)} (${esc(s.material)})</button>`).join(' ')}</div></div>`:''})()+'</div>'}
+let ls=null,lu=1,lsl=null;
+function ldDraw(){const p=S.printers.find(x=>x.id===$('#l-pr').value)||S.printers[0];
+$('#l-ams').innerHTML=[...Array(p.ams)].map((_,i)=>`<option value="${i+1}">AMS ${i+1}</option>`).join('')+'<option value="0">Externer Halter</option>';
+if(lu>p.ams)lu=p.ams?1:0;$('#l-ams').value=lu;
+const n=lu?SL(p):1;if(lsl>n)lsl=null;
+$('#l-slot').innerHTML=[...Array(n)].map((_,i)=>{const o=at(p.id,lu,i+1),me=o===ls;return `<button type="button" class="slot" data-sl="${i+1}" aria-pressed="${lsl===i+1}">${o&&!me?`<i style="background:${esc(o.hex)}"></i><span>${esc(o.color)}</span><em>wird getauscht</em>`:`<span>${lu?'Slot '+(i+1):'Halter'}</span><em>${me?'hier':'frei'}</em>`}</button>`}).join('')}
+function ff(){lsl=null;const p=$('#l-pr').value,n=lu?SL(S.printers.find(x=>x.id===p)):1;for(let i=1;i<=n;i++){const o=at(p,lu,i);if(!o||o===ls){lsl=i;break}}}
+function openLoad(s){ls=s;$('#ldh').textContent='Laden: '+s.color;$('#l-err').textContent='';
+$('#l-pr').innerHTML=S.printers.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+$('#l-pr').value=prOf(s)?s.printer:S.cfg.pr;lu=s.status==='geladen'&&prOf(s)?+s.ams:(S.printers.find(p=>p.id===$('#l-pr').value).ams?1:0);lsl=null;
+ff();ldDraw();$('#ld').hidden=false}
+function unload(s){s.status='lager';delete s.printer;delete s.ams;delete s.slot}
+function mst(t,p){const used=(p.hours||0)-(t.lastH||0),dd=days(t.lastD);const hr=t.h?used/t.h:0,dr=t.d?(dd===null?1:dd/t.d):0,rr=Math.max(hr,dr),bits=[];
+if(t.h)bits.push(used>=t.h?`${g(used-t.h)} h überfällig`:`noch ${g(t.h-used)} h`);if(t.d)bits.push(dd===null?'nie erledigt':dd>=t.d?`${dd-t.d} Tage überfällig`:`noch ${t.d-dd} Tage`);
+return {rr,st:rr>=1?'due':rr>=0.8?'soon':'ok',txt:bits.join(' · ')}}
+function wart(){$('#wp').innerHTML=S.printers.map(p=>{const ts=S.maint.filter(t=>t.printer===p.id).map(t=>({t,...mst(t,p)})).sort((a,b)=>b.rr-a.rr);
+const due=ts.filter(x=>x.st==='due').length,soon=ts.filter(x=>x.st==='soon').length,inst=S.acc.filter(a=>a.on&&a.printer===p.id),low=S.parts.filter(x=>(!x.printer||x.printer===p.id)&&x.qty<=x.min).length;
+const pills=(due?`<span class="pl due">${due} fällig</span>`:'')+(soon?`<span class="pl soon">${soon} bald fällig</span>`:'')+(!due&&!soon?'<span class="pl ok">Wartung okay</span>':'')+(low?`<span class="pl soon">${low} Ersatzteil${low>1?'e':''} nachkaufen</span>`:'')+inst.map(a=>`<span class="pl">${esc(a.kind)}: ${esc(a.name)}</span>`).join('');
+return `<div class="wk"><div class="pc"><h2>${esc(p.name)}<small>Betriebsstunden</small></h2><div class="hrs">${g(p.hours||0)} h</div><div class="pills">${pills}</div><div class="acts2"><button type="button" data-w="hrs" data-p="${p.id}">Stunden ändern</button><button type="button" data-w="addt" data-p="${p.id}">+ Aufgabe</button></div></div>
+${ts.map(({t,st,rr,txt})=>`<div class="tr ${st}"><div><button type="button" class="tn" data-w="edt" data-t="${t.id}" aria-label="${esc(t.name)} ändern">${esc(t.name)}</button><small>${txt}</small><div class="meter"><i style="width:${Math.min(100,rr*100).toFixed(0)}%"></i></div></div><button type="button" data-w="done" data-t="${t.id}">Erledigt</button></div>`).join('')||'<div class="tr"><small>Keine Aufgaben. Leg mit „+ Aufgabe“ eine an.</small></div>'}</div>`}).join('');
+const pn=id=>{const p=S.printers.find(x=>x.id===id);return p?esc(p.name):'alle Drucker'};
+$('#wparts').innerHTML=S.parts.length?S.parts.slice().sort((a,b)=>(a.qty>a.min)-(b.qty>b.min)||a.name.localeCompare(b.name)).map(x=>`<div class="pr"><div><b>${esc(x.name)}</b><small>für ${pn(x.printer)} · Mindestbestand ${x.min}</small>${x.qty<=x.min?'<div class="tags"><span class="tag">Nachkaufen</span></div>':''}<button type="button" class="ghost" data-w="edp" data-x="${x.id}" style="min-height:auto;padding:4px 0;font-size:14px">Bearbeiten</button></div><div class="qty"><button type="button" data-w="pm" data-x="${x.id}" aria-label="Eins weniger">−</button><span>${x.qty}</span><button type="button" data-w="pp" data-x="${x.id}" aria-label="Eins mehr">+</button></div></div>`).join(''):'<p class="note" style="margin:6px 0 0">Noch keine Ersatzteile. Typisch sind eine Ersatzdüse, Wiper, Schneidmesser und Trockenmittel.</p>';
+const kinds=['Druckplatte','Düse','Sonstiges'];
+$('#wacc').innerHTML=S.acc.length?kinds.map(k=>{const a=S.acc.filter(x=>x.kind===k);return a.length?`<div class="kind">${k}</div>`+a.sort((x,y)=>(y.on?1:0)-(x.on?1:0)||x.name.localeCompare(y.name)).map(x=>`<div class="pr"><div><b>${esc(x.name)}</b><small>${x.on?'Eingesetzt in '+pn(x.printer):'Im Lager'} · ${g(x.hours||0)} h benutzt</small>${x.on?'<div class="tags"><span class="tag on">Eingesetzt</span></div>':''}<button type="button" class="ghost" data-w="eda" data-x="${x.id}" style="min-height:auto;padding:4px 0;font-size:14px">Bearbeiten</button></div><button type="button" data-w="${x.on?'out':'in'}" data-x="${x.id}">${x.on?'Entnehmen':'Einsetzen'}</button></div>`).join(''):''}).join(''):'<p class="note" style="margin:6px 0 0">Trag deine Druckplatten und Hotends ein. Dann siehst du, was gerade im Drucker steckt und wie viele Stunden es schon gelaufen ist.</p>'}
+const hexOk=h=>/^#[0-9a-f]{6}$/i.test(h||'')?h.toLowerCase():'#888888';
+const lab=h=>{h=hexOk(h);const f=c=>c>0.04045?((c+0.055)/1.055)**2.4:c/12.92,r=f(parseInt(h.slice(1,3),16)/255),gg=f(parseInt(h.slice(3,5),16)/255),b=f(parseInt(h.slice(5,7),16)/255);const t=v=>v>0.008856?Math.cbrt(v):7.787*v+16/116;const x=t((r*0.4124+gg*0.3576+b*0.1805)/0.95047),y=t(r*0.2126+gg*0.7152+b*0.0722),z=t((r*0.0193+gg*0.1192+b*0.9505)/1.08883);return [116*y-16,500*(x-y),200*(y-z)]};
+const dE=(a,b)=>{const p=lab(a),q=lab(b);return Math.hypot(p[0]-q[0],p[1]-q[1],p[2]-q[2])};
+const famC=h=>{const [L,a,b]=lab(h),C=Math.hypot(a,b),H=(Math.atan2(b,a)*180/Math.PI+360)%360;if(C<10)return L>85?'Weiß':L<28?'Schwarz':'Grau';if(H>=35&&H<80&&L<45&&C<55)return 'Braun';
+return H<20||H>=335?'Pink':H<46?'Rot':H<75?'Orange':H<110?'Gelb':H<175?'Grün':H<240?'Türkis':H<302?'Blau':'Lila'};
+const TON={Weiß:'anderes Weiß',Schwarz:'anderes Schwarz',Grau:'anderer Grauton',Braun:'anderer Braunton',Pink:'anderer Pinkton',Rot:'anderer Rotton',Orange:'anderer Orangeton',Gelb:'anderer Gelbton',Grün:'anderer Grünton',Türkis:'anderer Türkiston',Blau:'anderer Blauton',Lila:'anderer Lilaton'};
+const fam=m=>String(m||'').toUpperCase().replace(/\s.*$/,'');
+const PJ=()=>S.projects;
+let pjCur=null;
+const pjPr=pr=>S.printers.find(p=>p.id===pr.printer)||S.printers[0];
+const need=(pr,rid)=>pr.plates.reduce((a,pl)=>a+((pl.fil.find(f=>f.r===rid)||{}).g||0),0);
+const needOpen=(pr,rid)=>pr.plates.filter(pl=>!pr.done[pl.id]).reduce((a,pl)=>a+((pl.fil.find(f=>f.r===rid)||{}).g||0),0);
+function score(q,s){return (fam(q.material)===fam(s.material)?0:50)+dE(q.hex,s.hex)-(famC(q.hex)===famC(s.hex)?15:0)-(String(q.color).toLowerCase()===String(s.color).toLowerCase()?10:0)}
+function cands(q){return S.spools.filter(s=>s.rest>0).map(s=>{const d=dE(q.hex,s.hex),mat=fam(q.material)===fam(s.material),sf=famC(q.hex)===famC(s.hex);return {s,sc:score(q,s),d,mat,sf,lbl:d<12?'':sf?TON[famC(q.hex)]:'andere Farbe'}}).sort((a,b)=>a.sc-b.sc)}
+function autoMap(pr){const used=new Set(Object.values(pr.map).filter(Boolean));
+for(const q of pr.reqs.slice().sort((a,b)=>need(pr,b.id)-need(pr,a.id))){if(q.id in pr.map&&(pr.map[q.id]===''||S.spools.some(s=>s.id===pr.map[q.id])))continue;const c=cands(q).find(c=>!used.has(c.s.id)&&c.mat&&(c.d<30||c.sf));pr.map[q.id]=c?c.s.id:'';if(c)used.add(c.s.id)}}
+function rinfo(pr,q){const sp=S.spools.find(s=>s.id===pr.map[q.id]);const nd=needOpen(pr,q.id);if(!sp)return {sp:null,st:'fehlt',nd,stock:0,tw:[]};
+const mapped=new Set(Object.values(pr.map));const tw=S.spools.filter(s=>s!==sp&&s.rest>0&&!mapped.has(s.id)&&fam(s.material)===fam(sp.material)&&dE(s.hex,sp.hex)<6);
+const stock=sp.rest+tw.reduce((a,s)=>a+s.rest,0),d=dE(q.hex,sp.hex),mat=fam(q.material)===fam(sp.material);
+const sf=famC(q.hex)===famC(sp.hex);return {sp,tw,nd,stock,d,mat,st:!mat?'alt':d<12?'ok':'alt',short:stock<nd,sim:d<12?'gleiche Farbe':sf?TON[famC(q.hex)]:d<30?'ähnliche Farbe':'deutlich andere Farbe'}}
+function plan(pr){const p=pjPr(pr),C=Math.max(1,(p.ams||0)*SL(p)),open=pr.plates.filter(pl=>!pr.done[pl.id]);
+const nset=pl=>pl.fil.filter(f=>f.g>0).map(f=>f.r);
+const stock={};for(const q of pr.reqs){const i=rinfo(pr,q);stock[q.id]=i.sp?i.stock:0}
+const init=[...new Set(pr.reqs.filter(q=>{const s=S.spools.find(x=>x.id===pr.map[q.id]);return s&&s.status==='geladen'&&s.printer===p.id}).map(q=>q.id).concat((pr.last||[]).filter(r=>pr.reqs.some(q=>q.id===r))))].slice(0,C);
+function sim(ord){const ld=new Set(init),rem={...stock},steps=[];let loads=0,cost=0;
+ord.forEach((pl,i)=>{const nd=nset(pl),ins=[],outs=[];
+for(const r of nd)if(!ld.has(r)){if(ld.size>=C){let far=-1,ev=null;for(const x of ld){if(nd.includes(x))continue;let nx=ord.slice(i+1).findIndex(o=>nset(o).includes(x));nx=nx<0?1e9:nx;if(nx>far){far=nx;ev=x}}if(ev){ld.delete(ev);outs.push(ev)}}ld.add(r);ins.push(r);loads++}
+const bl=pl.fil.some(f=>f.g>0&&(rem[f.r]||0)<f.g-0.5);if(!bl)for(const f of pl.fil)rem[f.r]=(rem[f.r]||0)-f.g;else cost+=1000*(ord.length-i);
+steps.push({pl,ins,outs,bl,over:nd.length>C,after:[...ld]})});return {cost:cost+loads,loads,steps}}
+let best=null;const n=open.length;
+if(n<=7){const a=open.slice(),c=Array(n).fill(0);const tryo=o=>{const r=sim(o);if(!best||r.cost<best.cost)best={...r,ord:o.slice()}};tryo(a);let i=0;while(i<n){if(c[i]<i){i%2?([a[c[i]],a[i]]=[a[i],a[c[i]]]):([a[0],a[i]]=[a[i],a[0]]);tryo(a);c[i]++;i=0}else{c[i]=0;i++}}}
+else{const ord=[],left=open.slice();while(left.length){let bi=0,bc=1e18;left.forEach((pl,j)=>{const r=sim(ord.concat([pl],left.filter((_,k)=>k!==j)));if(r.cost<bc){bc=r.cost;bi=j}});ord.push(left.splice(bi,1)[0])}best={...sim(ord),ord}}
+const base=sim(open);return {C,best,base,init}}
+function pjFresh(pr){autoMap(pr);const pl=plan(pr);const done=pr.order.filter(id=>pr.done[id]);pr.order=done.concat(pl.best?pl.best.ord.map(x=>x.id):[])}
+const rq=(pr,id)=>pr.reqs.find(q=>q.id===id);
+const rname=(pr,id)=>{const q=rq(pr,id),sp=S.spools.find(s=>s.id===pr.map[id]);return q?(sp?esc(sp.color)+(sp.color.toLowerCase()!==q.color.toLowerCase()?` <span class="none">statt ${esc(q.color)}</span>`:''):esc(q.color)+' <span class="none">(fehlt)</span>'):'?'};
+const fmtMin=m=>{m=Math.round(m);return m>=60?Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')+' min':m+' min'};
+function pjList(){const l=PJ();$('#pjl').innerHTML=l.length?l.map(pr=>{const tot=pr.plates.reduce((a,p)=>a+p.min,0),dn=pr.plates.filter(p=>pr.done[p.id]).reduce((a,p)=>a+p.min,0),inf=pr.reqs.map(q=>rinfo(pr,q)),miss=inf.filter(i=>i.st==='fehlt').length,alt=inf.filter(i=>i.st==='alt').length,sh=inf.filter(i=>i.st!=='fehlt'&&i.short).length,pc=tot?Math.round(dn/tot*100):0;
+return `<button type="button" class="pjc" data-pj="${pr.id}"><b>${esc(pr.name)}</b><small>${pr.plates.length} Platten · ${fmtMin(tot)} · ${esc(pjPr(pr).name)} · ${eur(pjCost(pr).cost)}</small><div class="meter"><i style="width:${pc}%"></i></div><span class="pills">${pc?`<span class="tag on">${pc} % fertig</span>`:''}${!miss&&!alt&&!sh?'<span class="tag on">Material komplett</span>':''}${alt?`<span class="tag w">${alt} Alternative${alt>1?'n':''}</span>`:''}${miss?`<span class="tag">${miss} fehlt</span>`:''}${sh?`<span class="tag">${sh}× zu wenig</span>`:''}</span></button>`}).join(''):'<div class="empty"><b style="color:var(--ink)">Noch kein Projekt</b><br>Leg ein Projekt aus Screenshots der MakerWorld-Profilseite oder aus Bambu Studio an. Die App prüft dann dein Lager und plant die Platten.</div>'}
+function ppg(pr,q){const sp=S.spools.find(s=>s.id===pr.map[q.id]);if(sp&&sp.price&&sp.net)return {v:sp.price/sp.net,est:false};
+const same=S.spools.filter(s=>s.price&&s.net&&fam(s.material)===fam(q.material));if(same.length)return {v:same.reduce((a,s)=>a+s.price/s.net,0)/same.length,est:true};return {v:0.025,est:true}}
+function pjCost(pr){const p=pjPr(pr),c=S.cfg,kwh=+c.kwh||0,fail=(+c.fail||0)/100,dep=c.dep&&p.life?p.price/p.life:0,rate=+c.rate||0,mar=(pr.mar??c.mar??0)/100;
+const pq={};for(const q of pr.reqs)pq[q.id]=ppg(pr,q);
+const plates=pr.plates.map(pl=>{const h=pl.min/60,mat=pl.fil.reduce((a,f)=>a+f.g*((pq[f.r]||{v:0}).v),0),str=h*p.watt/1000*kwh,wr=h*(p.wear||0),dp=h*dep,fl=(mat+str)*fail;return {pl,mat,str,wr,dp,fl,sum:mat+str+wr+dp+fl,done:!!pr.done[pl.id]}});
+const S0=k=>plates.reduce((a,x)=>a+x[k],0),lab=(pr.lab||0)/60*rate;
+const parts=[['Material',S0('mat')],['Strom',S0('str')],['Verschleiß',S0('wr')],['Abschreibung',S0('dp')],['Fehldruck',S0('fl')],['Arbeit',lab]];
+const cost=parts.reduce((a,x)=>a+x[1],0),reqs=pr.reqs.map(q=>{const gm=need(pr,q.id);return {q,gm,cost:gm*pq[q.id].v,est:pq[q.id].est}}).filter(x=>x.gm>0);
+return {p,parts,cost,sale:cost*(1+mar),mar,plates,reqs,doneCost:plates.filter(x=>x.done).reduce((a,x)=>a+x.sum,0),est:reqs.some(x=>x.est)}}
+function pjCostHtml(pr){const k=pjCost(pr),mx=Math.max(...k.parts.map(x=>x[1]),0.0001);
+return `<section class="box pjk"><div class="bh"><h3>Kosten</h3><button type="button" data-pa="cost">Nacharbeit und Aufschlag</button></div>
+<div class="kt"><div><span class="lbl2">Gesamtkosten</span><b class="kbig">${eur(k.cost)}</b></div>${k.mar>0?`<div><span class="lbl2">Verkaufspreis (+${Math.round(k.mar*100)} %)</span><b class="kbig" style="color:var(--hotink)">${eur(k.sale)}</b></div>`:''}</div>
+<div class="kt2"><div><span class="lbl2">Schon gedruckt</span><b>${eur(k.doneCost)}</b></div><div><span class="lbl2">Noch offen</span><b>${eur(k.cost-k.doneCost)}</b></div><div><span class="lbl2">Pro Druckstunde</span><b>${eur(k.cost/Math.max(0.01,pr.plates.reduce((a,x)=>a+x.min,0)/60))}</b></div></div>
+<div class="brk lt">${k.parts.map(([l,v])=>`<div class="${v<0.005?'z':''}"><span>${l}</span><span><i style="width:${(v/mx*100).toFixed(1)}%"></i></span><em>${eur(v)}</em></div>`).join('')}</div>
+<details><summary>Material nach Farbe</summary>${k.reqs.map(x=>`<div class="kr"><span><span class="dot" style="background:${hexOk(x.q.hex)}"></span>${esc(x.q.color)} · ${g(x.gm)} g${x.est?' <span class="none">· Preis geschätzt</span>':''}</span><em>${eur(x.cost)}</em></div>`).join('')}</details>
+<details><summary>Kosten pro Platte</summary>${k.plates.map(x=>`<div class="kr"><span>${x.done?'✓ ':''}${esc(x.pl.name)} · ${fmtMin(x.pl.min)}</span><em>${eur(x.sum)}</em></div>`).join('')}</details>
+<p class="note" style="margin:8px 0 0">Gerechnet mit ${esc(k.p.name)} und deinen Werten aus dem Kosten-Tab: ${String(S.cfg.kwh).replace('.',',')} €/kWh, ${S.cfg.fail} % Fehldruck-Puffer${S.cfg.dep?', mit Abschreibung':''}${pr.lab?`, ${pr.lab} min Nacharbeit à ${eur(+S.cfg.rate||0)}/h`:''}.${k.est?' Für Farben ohne Rolle mit Preis nimmt die App den Durchschnittspreis des Materials aus deinem Lager, sonst 25 €/kg.':''}</p></section>`}
+function pjDetail(){const pr=PJ().find(x=>x.id===pjCur);$('#pjl').hidden=!!pr;$('#pjtop').hidden=!!pr;if(!pr){$('#pjd').innerHTML='';return}
+const p=pjPr(pr),tot=pr.plates.reduce((a,x)=>a+x.min,0),dn=pr.plates.filter(x=>pr.done[x.id]).reduce((a,x)=>a+x.min,0),pc=tot?dn/tot*100:0,gsum=pr.plates.reduce((a,x)=>a+x.fil.reduce((b,f)=>b+f.g,0),0);
+const pl=plan(pr),ids=new Set(pr.plates.map(x=>x.id));if(pr.order.filter(id=>ids.has(id)).length!==pr.plates.length)pjFresh(pr);
+const st={};if(pl.best)for(const s of pl.best.steps)st[s.pl.id]=s;
+const ordPl=pr.order.map(id=>pr.plates.find(x=>x.id===id)).filter(Boolean);let cum=0;
+const needColors=pr.reqs.filter(q=>needOpen(pr,q.id)>0).length;
+$('#pjd').innerHTML=`<button type="button" class="ghost" data-pa="back" style="padding-left:0">← Alle Projekte</button>
+<div class="pc" style="margin:6px 0 14px"><h2>${esc(pr.name)}<small>${pr.link?`<a href="${esc(pr.link)}" style="color:var(--hotink)">MakerWorld</a>`:''}</small></h2><div class="hrs">${Math.round(pc)} %</div><div class="lbl" style="color:#8a958e;font-size:14px">${fmtMin(dn)} von ${fmtMin(tot)} gedruckt · noch ${fmtMin(tot-dn)} · ${pr.plates.length} Platten · ${g(gsum)} g Filament</div><div class="meter" style="margin:10px 0;background:#26302a"><i style="width:${pc.toFixed(1)}%;background:var(--hot)"></i></div>
+<div class="acts2"><label style="flex:1;color:#8a958e">Drucker<select data-pa="pr">${S.printers.map(x=>`<option value="${x.id}"${x.id===p.id?' selected':''}>${esc(x.name)} · ${(x.ams||0)*SL(x)} Slots</option>`).join('')}</select></label></div></div>
+<section class="box"><div class="bh"><h3>Material-Check</h3><button type="button" data-pa="addr">+ Filament</button></div>
+${pr.reqs.map(q=>{const i=rinfo(pr,q),cs=cands(q).slice(0,12),tot=need(pr,q.id);
+const pill=i.st==='fehlt'?'<span class="tag">Fehlt, nachkaufen</span>':i.st==='ok'?'<span class="tag on">Vorhanden</span>':`<span class="tag w">Alternative · ${i.mat?i.sim:'anderes Material'}</span>`;
+return `<div class="rq"><span class="dot" style="background:${hexOk(q.hex)};width:22px;height:22px"></span><div><button type="button" class="tn" data-pa="edr" data-r="${q.id}">${esc(q.material)} · ${esc(q.color)}</button><small>${g(tot)} g benötigt${i.nd<tot?`, noch ${g(i.nd)} g offen`:''}</small><div class="tags">${pill}${!i.sp&&cs[0]&&cs[0].mat?`<span class="tag n">Nächste im Lager: ${esc(cs[0].s.color)} (${cs[0].lbl||'gleiche Farbe'})</span>`:''}${i.sp&&i.short?`<span class="tag">Zu wenig: ${g(i.nd-i.stock)} g fehlen</span>`:''}${i.sp&&i.tw.length?`<span class="tag n">+ ${i.tw.length} gleiche Rolle${i.tw.length>1?'n':''}</span>`:''}</div>
+<select data-pa="map" data-r="${q.id}" aria-label="Rolle für ${esc(q.color)}"><option value="">Keine Rolle, nachkaufen</option>${cs.map(c=>`<option value="${c.s.id}"${c.s.id===pr.map[q.id]?' selected':''}>${esc(c.s.color)} · ${esc(c.s.material)} · ${g(c.s.rest)} g${c.mat?(c.lbl?' · '+c.lbl:''):' · anderes Material'}</option>`).join('')}</select></div></div>`}).join('')||'<p class="note">Noch keine Filamente.</p>'}</section>
+${pjCostHtml(pr)}
+<section class="box"><div class="bh"><h3>Reihenfolge und Checkliste</h3><button type="button" data-pa="addp">+ Platte</button></div>
+${pl.best&&pl.best.steps.length&&pl.best.loads?`<p class="note" style="margin:0 0 6px">${needColors>pl.C?`Das Projekt braucht ${needColors} Farben, dein ${esc(p.name)} hat ${pl.C} Slots. `:''}Mit dieser Reihenfolge legst du ${pl.best.loads} Mal eine Rolle ins AMS${pl.base.loads>pl.best.loads?`, statt ${pl.base.loads} Mal in der Originalreihenfolge`:''}. ${pl.best.steps.some(s=>s.bl)?'Platten, für die das Material nicht reicht, stehen am Ende, damit du den Rest schon drucken kannst.':''}</p>`:''}
+${ordPl.map((x,i)=>{cum+=x.min;const s=st[x.id],dnx=!!pr.done[x.id];
+return `<div class="ck${dnx?' dn':''}${s&&s.bl?' bl':''}"><input type="checkbox" data-pa="tick" data-p="${x.id}"${dnx?' checked':''} aria-label="${esc(x.name)} erledigt"><div><button type="button" class="tn" data-pa="edp" data-p="${x.id}">${i+1}. ${esc(x.name)}</button><small>${x.min?'':'<span style="color:var(--alarmink)">Zeit und Gramm fehlen, antippen zum Eintragen · </span>'}${fmtMin(x.min)} · nach ${fmtMin(cum)} gesamt · ${x.fil.filter(f=>f.g>0).map(f=>{const q=rq(pr,f.r);return q?`<span class="dot" style="background:${hexOk(q.hex)}"></span>${g(f.g)} g`:''}).join(' ')}</small>
+${!dnx&&s?`${s.ins.length||s.outs.length?`<div class="sw2">${s.outs.length?`<span>Raus: ${s.outs.map(r=>rname(pr,r)).join(', ')}</span>`:''}${s.ins.length?`<span>Rein: ${s.ins.map(r=>rname(pr,r)).join(', ')}</span>`:''}</div>`:'<div class="sw2"><span>Kein Wechsel nötig</span></div>'}${s.bl?'<div class="tags"><span class="tag">Material reicht nicht, erst nachkaufen</span></div>':''}${s.over?`<div class="tags"><span class="tag w">Mehr Farben als Slots, Wechsel während des Drucks</span></div>`:''}`:''}</div></div>`}).join('')||'<p class="note">Noch keine Platten.</p>'}
+<div class="row"><button type="button" data-pa="replan">Reihenfolge neu berechnen</button><span class="sp"></span><button type="button" class="del" data-pa="delpj">Projekt löschen</button></div>
+<p class="note" style="margin:8px 0 0">Beim Abhaken einer Platte zieht die App die Gramm von den Rollen ab und bucht die Druckzeit auf den Drucker. Haken entfernen macht das rückgängig.</p></section>`}
+async function unzip3mf(file,want){const buf=await file.arrayBuffer(),dv=new DataView(buf),u8=new Uint8Array(buf);let e=-1;for(let i=buf.byteLength-22;i>=Math.max(0,buf.byteLength-65600);i--)if(dv.getUint32(i,true)===0x06054b50){e=i;break}
+if(e<0)throw new Error('zip');const cnt=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const out={},td=new TextDecoder();
+for(let k=0;k<cnt;k++){if(dv.getUint32(p,true)!==0x02014b50)break;const m=dv.getUint16(p+10,true),cs=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),xl=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),lo=dv.getUint32(p+42,true),name=td.decode(u8.subarray(p+46,p+46+nl));p+=46+nl+xl+cl;
+if(!want.some(w=>w.test(name)))continue;const ln=dv.getUint16(lo+26,true),lx=dv.getUint16(lo+28,true),d=u8.subarray(lo+30+ln+lx,lo+30+ln+lx+cs);
+if(m===0)out[name]=td.decode(d);else if(m===8){const ds=new Blob([d]).stream().pipeThrough(new DecompressionStream('deflate-raw'));out[name]=await new Response(ds).text()}}return out}
+const cName=h=>{const f=famC(h),L=lab(h)[0];if(f==='Weiß'||f==='Schwarz')return f;return (L>72?'Hell':L<40?'Dunkel':'')+(L>72||L<40?f.toLowerCase():f)};
+const bbName=h=>{let best=null,bd=7;for(const p of BB)for(const [n,x] of p.c){const d=dE(h,x);if(d<bd){bd=d;best=n}}return best};
+async function read3mf(file){const f=await unzip3mf(file,[/^Metadata\/slice_info\.config$/i,/^Metadata\/project_settings\.config$/i,/^Metadata\/model_settings\.config$/i]);
+const xml=t=>t?new DOMParser().parseFromString(t,'application/xml'):null,md=(el,k)=>{const m=[...el.children].find(c=>c.tagName==='metadata'&&c.getAttribute('key')===k);return m?m.getAttribute('value'):null};
+let ps={};try{ps=JSON.parse(f['Metadata/project_settings.config']||'{}')}catch(e){}
+const cols=ps.filament_colour||[],types=ps.filament_type||[],sets=ps.filament_settings_id||[];
+const fil=i=>{const hex=hexOk(cols[i]),prod=String(sets[i]||'').replace(/\s*@.*$/,'').trim(),bn=/bambu/i.test(prod)?bbName(hex):null;return {material:fam(types[i]||prod.replace(/^bambu\s*/i,'').split(' ')[0]||'PLA'),hex,color:bn||(prod&&!/^generic/i.test(prod)?prod+' ':'')+cName(hex)}};
+const names={},ms=xml(f['Metadata/model_settings.config']);if(ms)for(const pl of ms.querySelectorAll('plate')){const id=md(pl,'plater_id'),nm=md(pl,'plater_name');if(id)names[id]=nm||''}
+const si=xml(f['Metadata/slice_info.config']),plates=[];let sliced=false;
+if(si)for(const pl of si.querySelectorAll('plate')){const idx=md(pl,'index')||String(plates.length+1),sec=+(md(pl,'prediction')||0),fs=[...pl.querySelectorAll('filament')];if(!fs.length&&!sec)continue;sliced=true;
+plates.push({name:names[idx]||'Platte '+idx,minutes:Math.round(sec/60),filaments:fs.map(x=>{const i=(+x.getAttribute('id')||1)-1,b=fil(i),ch=x.getAttribute('color'),ty=x.getAttribute('type');return {...b,hex:ch?hexOk(ch):b.hex,material:ty?fam(ty):b.material,color:ch&&hexOk(ch)!==b.hex?(bbName(hexOk(ch))||cName(hexOk(ch))):b.color,grams:+(x.getAttribute('used_g')||0)}})})}
+if(!plates.length){const ids=Object.keys(names).sort((a,b)=>a-b);const all=cols.map((_,i)=>({...fil(i),grams:0}));(ids.length?ids:['1']).forEach(id=>plates.push({name:names[id]||'Platte '+id,minutes:0,filaments:all}))}
+return {plates,sliced,nFil:cols.length}}
+
+function pjRender(){pjList();pjDetail()}
+function tick(pr,id){const x=pr.plates.find(y=>y.id===id);if(!x)return;const p=pjPr(pr);
+if(pr.done[id]){const d=pr.done[id];for(const [sid,gm] of d.b){const s=S.spools.find(y=>y.id===sid);if(s)s.rest=Math.min(s.net,s.rest+gm)}const pp=S.printers.find(y=>y.id===d.p);if(pp)pp.hours=Math.max(0,Math.round(((pp.hours||0)-d.h)*100)/100);for(const aid of d.a){const a=S.acc.find(y=>y.id===aid);if(a)a.hours=Math.max(0,Math.round(((a.hours||0)-d.h)*100)/100)}delete pr.done[id];pr.order=pr.order.filter(o=>o!==id).concat([id]);pjFresh(pr);save();return}
+const pst=plan(pr),stp=pst.best&&pst.best.steps.find(z=>z.pl.id===id);pr.last=stp?stp.after:x.fil.map(f=>f.r);
+const b=[];for(const f of x.fil){if(!(f.g>0))continue;let left=f.g;const sp=S.spools.find(s=>s.id===pr.map[f.r]);const pool=sp?[sp].concat(rinfo(pr,rq(pr,f.r)).tw):[];for(const s of pool){if(left<=0)break;const t=Math.min(s.rest,left);if(t>0){s.rest=Math.round((s.rest-t)*10)/10;left-=t;b.push([s.id,t])}}}
+const h=Math.round(x.min/60*100)/100,ins=S.acc.filter(a=>a.on&&a.printer===p.id);p.hours=Math.round(((p.hours||0)+h)*100)/100;for(const a of ins)a.hours=Math.round(((a.hours||0)+h)*100)/100;
+pr.done[id]={b,h,p:p.id,a:ins.map(a=>a.id),at:today()};pr.order=pr.order.filter(o=>o!==id&&pr.done[o]).concat([id],pr.order.filter(o=>o!==id&&!pr.done[o]));save();
+toast(`„${x.name}“ erledigt · ${b.reduce((a,y)=>a+y[1],0).toLocaleString('de-DE',{maximumFractionDigits:0})} g, ${h.toLocaleString('de-DE')} h verbucht`,null)}
+function mkProject(v,name,link,pid){const pr={id:'j'+Date.now().toString(36),name:name||v.name||'Neues Projekt',link:link||'',printer:pid,created:today(),plates:[],reqs:[],map:{},order:[],done:{}};
+const key=f=>(fam(f.material)+'|'+String(f.color||'').trim().toLowerCase());const idx={};
+(v.plates||[]).forEach((x,i)=>{const pl={id:'l'+i+Math.random().toString(36).slice(2,6),name:String(x.name||('Platte '+(i+1))).trim(),min:Math.max(0,Math.round(+x.minutes||0)),fil:[]};
+for(const f of (x.filaments||[])){const k=key(f);if(!idx[k]){const q={id:'r'+Object.keys(idx).length+Math.random().toString(36).slice(2,5),material:(fam(f.material)||'PLA'),color:String(f.color||'Unbekannt').trim(),hex:hexOk(f.hex)};idx[k]=q;pr.reqs.push(q)}const ex=pl.fil.find(y=>y.r===idx[k].id),gm=Math.round((+f.grams||0)*10)/10;if(ex)ex.g+=gm;else pl.fil.push({r:idx[k].id,g:gm})}
+pr.plates.push(pl)});pjFresh(pr);return pr}
+
+function render(){figs();ams();grid();adv();calcFill();wart();pjRender()}
+let art=null,tm=0;
+const status=t=>{$('#save').textContent=PWA&&/Browser/.test(t)?'Auf diesem Gerät gespeichert.':t};
+function pub(){if(!art){status('Gespeichert in diesem Browser.');return}
+const b=BODY.cloneNode(true);b.querySelector('#state').textContent=JSON.stringify(S).replace(/</g,'\\u003c');
+status('Speichert …');art.publish('<!DOCTYPE html>\n<html lang="de">'+HEAD.outerHTML+b.outerHTML+'</html>').then(()=>status('Gespeichert.')).catch(e=>status(/not_(granted|writer)/.test(String(e&&e.message||e))?'Nur ansehen: Änderungen bleiben in diesem Browser.':'Gespeichert in diesem Browser.'))}
+function save(){S.ts=Date.now();try{localStorage.setItem(KEY,JSON.stringify({base:EMB,s:S}))}catch(e){}render();clearTimeout(tm);tm=setTimeout(pub,1200)}
+let cur=null,lastDel=null,tT=0;
+function toast(t,fn){lastDel=fn||null;$('#undo').hidden=!fn;$('#tt').textContent=t;$('#toast').hidden=false;clearTimeout(tT);tT=setTimeout(()=>$('#toast').hidden=true,6000)}
+const opts=['PLA','PETG','ABS','ASA','TPU','PA','PC','PETG-CF','Sonstiges'];
+$('#e-mat').innerHTML=opts.map(o=>`<option>${o}</option>`).join('');
+function fm(){const v=$('#fm').value,used=[...new Set(S.spools.map(s=>s.material))].sort();$('#fm').innerHTML='<option value="">Alle Materialien</option>'+used.map(o=>`<option${o===v?' selected':''}>${esc(o)}</option>`).join('')}
+function openEd(s){cur=s||null;$('#edh').textContent=s?'Spule bearbeiten':'Neue Spule';$('#e-del').hidden=!s;$('#e-err').textContent='';
+const v=s||{material:'PLA',brand:'',color:'',hex:'#ff5a1f',net:1000,rest:1000,price:'',dried:'',place:'',kind:'spool',status:'lager'};$('#e-kind').value=v.kind||'spool';$('#e-st').value=v.status||'lager';
+$('#e-mat').value=opts.includes(v.material)?v.material:'Sonstiges';$('#e-brand').value=v.brand;$('#e-col').value=v.color;$('#e-hex').value=v.hex;$('#e-net').value=v.net;$('#e-rest').value=v.rest;$('#e-price').value=v.price;$('#e-dry').value=v.dried;$('#e-place').value=v.place;
+$('#ed').hidden=false;$('#e-col').focus()}
+$('#f').addEventListener('submit',e=>{e.preventDefault();const col=$('#e-col').value.trim(),net=+$('#e-net').value,rest=+$('#e-rest').value,price=$('#e-price').value===''?'':+$('#e-price').value;
+const err=!col?'Gib einen Farbnamen ein.':!(net>0)?'Das Nettogewicht muss größer als 0 sein.':!(rest>=0)||$('#e-rest').value===''?'Gib die Restmenge ein.':rest>net?'Der Rest kann nicht größer als das Nettogewicht sein.':(price!==''&&!(price>=0))?'Der Preis ist ungültig.':'';
+if(err){$('#e-err').textContent=err;return}
+const d={material:$('#e-mat').value,brand:$('#e-brand').value.trim(),color:col,hex:$('#e-hex').value,net:Math.round(net),rest:Math.round(rest),price,dried:$('#e-dry').value,place:$('#e-place').value.trim(),kind:$('#e-kind').value,status:$('#e-st').value};
+let t=cur;if(cur)Object.assign(cur,d);else{if(S.sample){S.spools=[];S.sample=false}t={id:'s'+Date.now().toString(36),...d};S.spools.push(t)}
+if(t.status!=='geladen')unload(t);$('#ed').hidden=true;fm();save();if(t.status==='geladen'&&!prOf(t))openLoad(t)});
+$('#f').addEventListener('input',()=>$('#e-err').textContent='');
+$('#e-x').addEventListener('click',()=>$('#ed').hidden=true);
+$('#e-del').addEventListener('click',()=>{const i=S.spools.indexOf(cur),s=cur;if(i<0)return;S.spools.splice(i,1);$('#ed').hidden=true;fm();save();toast(`„${s.color}“ gelöscht`,()=>{S.spools.splice(i,0,s);fm()})});
+$('#undo').addEventListener('click',()=>{if(!lastDel)return;lastDel();lastDel=null;$('#toast').hidden=true;save()});
+for(const id of ['#c-g','#c-n','#c-h','#c-m','#c-lab','#c-kg'])$(id).addEventListener('input',()=>{draft();calc()});
+$('#c-sp').addEventListener('change',()=>{draft();calc()});
+for(const k of ['kwh','fail','rate','mar'])$('#c-'+k).addEventListener('input',calc);
+for(const k of ['kwh','fail','rate','mar'])$('#c-'+k).addEventListener('change',()=>{const v=num('#c-'+k);if(v>=0){S.cfg[k]=v;draft();save()}});
+$('#c-dep').addEventListener('change',()=>{S.cfg.dep=$('#c-dep').checked;draft();save()});
+$('#c-pr').addEventListener('change',()=>{S.cfg.pr=$('#c-pr').value;draft();save()});
+$('#out').addEventListener('click',e=>{if(!e.target.closest('#c-ded'))return;const sp=S.spools.find(s=>s.id===$('#c-sp').value),gr=Math.round(num('#c-g')),hrs=Math.round(((num('#c-h')||0)+(num('#c-m')||0)/60)*100)/100,p=S.printers.find(x=>x.id===$('#c-pr').value);if(!(gr>0)||!(hrs>0)||!p)return;
+const before=sp?sp.rest:0,ph=p.hours||0,ins=S.acc.filter(a=>a.on&&a.printer===p.id),ah=ins.map(a=>a.hours||0);if(sp)sp.rest=Math.max(0,sp.rest-gr);p.hours=Math.round((ph+hrs)*100)/100;for(const a of ins)a.hours=Math.round(((a.hours||0)+hrs)*100)/100;draft();save();
+toast(`Verbucht: ${sp?g(before-sp.rest)+' g, ':''}${hrs.toLocaleString('de-DE')} h auf ${p.name}`,()=>{if(sp)sp.rest=before;p.hours=ph;ins.forEach((a,i)=>a.hours=ah[i])})});
+let pe=null;
+function pmList(){$('#plist').innerHTML=S.printers.map(p=>`<button type="button" data-p="${p.id}" aria-pressed="${pe&&pe.id===p.id}"><span>${esc(p.name)}</span><small>${p.ams?p.ams+'× AMS · '+SL(p)+' Slots':'kein AMS'} · ${p.watt} W</small></button>`).join('')}
+function pmEdit(p){pe=p||null;const v=p||{name:'',price:'',life:4000,watt:120,wear:0.1};$('#p-name').value=v.name;$('#p-price').value=v.price;$('#p-life').value=v.life;$('#p-watt').value=v.watt;$('#p-wear').value=v.wear;$('#p-ams').value=v.ams??1;$('#p-slots').value=String(v.slots||4);$('#p-del').hidden=!p||S.printers.length<2;$('#p-err').textContent='';pmList()}
+$('#c-prm').addEventListener('click',()=>{pmEdit(S.printers.find(p=>p.id===S.cfg.pr));$('#pm').hidden=false});
+$('#plist').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(b)pmEdit(S.printers.find(p=>p.id===b.dataset.p))});
+$('#p-new').addEventListener('click',()=>{pmEdit();$('#p-name').focus()});
+$('#p-x').addEventListener('click',()=>$('#pm').hidden=true);
+$('#pf').addEventListener('input',()=>$('#p-err').textContent='');
+$('#pf').addEventListener('submit',e=>{e.preventDefault();const d={name:$('#p-name').value.trim(),price:num('#p-price'),life:num('#p-life'),watt:num('#p-watt'),wear:num('#p-wear'),ams:+$('#p-ams').value,slots:+$('#p-slots').value};
+const err=!d.name?'Gib dem Drucker einen Namen.':!(d.price>=0)?'Gib den Kaufpreis ein.':!(d.life>0)?'Die Lebensdauer muss größer als 0 sein.':!(d.watt>=0)?'Gib die Leistung in Watt ein.':!(d.wear>=0)?'Gib den Verschleiß pro Stunde ein, 0 ist auch okay.':'';
+if(err){$('#p-err').textContent=err;return}
+if(pe)Object.assign(pe,d);else{pe={id:'p'+Date.now().toString(36),...d};S.printers.push(pe);mInit(pe)}for(const x of S.spools)if(x.printer===pe.id&&x.status==='geladen'&&(+x.ams>pe.ams||(+x.ams>0&&+x.slot>pe.slots)))unload(x);S.cfg.pr=pe.id;draft();save();pmEdit(pe);toast(`„${pe.name}“ gespeichert`)});
+$('#p-del').addEventListener('click',()=>{if(!pe||S.printers.length<2)return;const i=S.printers.indexOf(pe),p=pe;for(const x of S.spools)if(x.printer===p.id)unload(x);const mt=S.maint.filter(t=>t.printer===p.id);S.maint=S.maint.filter(t=>t.printer!==p.id);for(const a of S.acc)if(a.printer===p.id){a.on=false;a.printer=''}for(const x of S.parts)if(x.printer===p.id)x.printer='';S.printers.splice(i,1);if(S.cfg.pr===p.id)S.cfg.pr=S.printers[0].id;draft();save();pmEdit(S.printers[0]);toast(`„${p.name}“ gelöscht`,()=>{S.printers.splice(i,0,p)})});
+function openUse(s){cur=s;$('#ush').textContent='Verbrauch: '+s.color;$('#usn').textContent=`Noch ${g(s.rest)} g auf der Spule.`;$('#u-g').value='';$('#u-err').textContent='';$('#us').hidden=false;$('#u-g').focus()}
+$('#us').addEventListener('click',e=>{const b=e.target.closest('[data-g]');if(b){$('#u-g').value=b.dataset.g;$('#u-err').textContent=''}});
+$('#uf').addEventListener('submit',e=>{e.preventDefault();const v=+$('#u-g').value;if(!(v>0)){$('#u-err').textContent='Gib die verbrauchten Gramm ein.';return}
+cur.rest=Math.max(0,Math.round(cur.rest-v));$('#us').hidden=true;save();if(cur.rest<LOW)toast(`„${cur.color}“ ist fast leer: ${g(cur.rest)} g`)});
+$('#u-g').addEventListener('input',()=>$('#u-err').textContent='');
+$('#u-x').addEventListener('click',()=>$('#us').hidden=true);
+for(const sh of ['#ed','#us','#pm','#bm','#ld','#im','#gs','#pj','#sc'])$(sh).addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.hidden=true});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')for(const sh of ['#ed','#us','#pm','#bm','#ld','#im','#gs','#pj','#sc'])$(sh).hidden=true});
+$('#grid').addEventListener('click',e=>{const b=e.target.closest('button[data-a]');if(!b)return;const s=S.spools.find(x=>x.id===b.dataset.id);if(!s)return;if(b.dataset.a==='st'){if(s.status==='geladen'){const was={...s};unload(s);save();toast(`„${s.color}“ ins Lager gelegt`,()=>{Object.assign(s,was)})}else openLoad(s);return}b.dataset.a==='use'?openUse(s):openEd(s)});
+$('#add').addEventListener('click',()=>openEd());
+const SHORTCUT='Filamentregal Scan';
+const SCAN_PROMPT=`Du bekommst Text oder ein Foto rund um 3D-Druck-Filament. Das ist entweder ein Spulen-Etikett, Karton, Lieferschein oder eine Rechnung, oder ein Druckprojekt (MakerWorld-Profilseite oder Bambu Studio nach dem Slicen).
+Antworte NUR mit JSON, ohne Erklärung und ohne Codeblock.
+Bei Etikett, Lieferschein oder Rechnung: {"type":"spulen","items":[{"brand":"Hersteller","product":"Produktlinie, z.B. PLA Basic","material":"PLA, PETG, ABS, ASA, TPU, PA, PC, PETG-CF oder Sonstiges","color":"Farbname wie gedruckt","hex":"#rrggbb, passend zum Farbnamen","net":Nettogewicht in Gramm (Standard 1000),"qty":Anzahl Rollen,"price":Preis pro Rolle in Euro brutto oder null,"refill":true wenn Refill/ohne Spule}]}
+Bei einem Druckprojekt: {"type":"projekt","name":"Projektname","plates":[{"name":"Plattenname","minutes":Druckzeit in Minuten (0 wenn unbekannt),"filaments":[{"material":"PLA, PETG, ABS, ASA, TPU, PA, PC oder PETG-CF","color":"Farbname","hex":"#rrggbb","grams":Gramm}]}]}
+Gleiche Rollen bzw. gleiche Farben pro Platte zusammenfassen. Versandkosten, Zubehör und Drucker weglassen.`;
+let scMode='spool';
+function openScan(m){scMode=m;$('#sch').textContent=m==='project'?'Projekt per Kurzbefehl':'Spulen per Kurzbefehl';$('#sc-err').textContent='';$('#sc-txt').value='';$('#sc').hidden=false}
+function parseAI(t){t=String(t||'');const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<a)throw new Error('kein JSON');return JSON.parse(t.slice(a,b+1))}
+function takeAI(t){let v;try{v=parseAI(t)}catch(e){$('#sc-err').textContent='In der Zwischenablage steht keine passende Antwort. Lass den Kurzbefehl nochmal laufen.';return}
+if(Array.isArray(v.plates)&&v.plates.length&&(scMode==='project'||!Array.isArray(v.items)||!v.items.length)){$('#sc').hidden=true;pjFromV(v);return}
+if(Array.isArray(v.items)){$('#sc').hidden=true;if(scMode==='project')toast('Das war ein Etikett, ich zeige die Spulen.',null);showIm(v);return}
+$('#sc-err').textContent='Die Antwort enthält weder Spulen noch Platten.'}
+$('#sc-run').addEventListener('click',()=>{location.href='shortcuts://run-shortcut?name='+encodeURIComponent(SHORTCUT)});
+$('#sc-paste').addEventListener('click',async()=>{$('#sc-err').textContent='';try{const t=await navigator.clipboard.readText();takeAI(t)}catch(e){$('#sc-err').textContent='Die Zwischenablage konnte nicht gelesen werden. Öffne „Ohne Kurzbefehl“ und füge die Antwort dort ein.'}});
+$('#sc-copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(SCAN_PROMPT);toast('Auftrag kopiert',null)}catch(e){$('#sc-txt').value=SCAN_PROMPT;$('#sc-err').textContent='Kopieren ging nicht. Der Auftrag steht im Feld, markier ihn dort.'}});
+$('#sc-ok').addEventListener('click',()=>{const t=$('#sc-txt').value.trim();if(!t){$('#sc-err').textContent='Füge zuerst die Antwort ein.';return}takeAI(t)});
+$('#sc-txt').addEventListener('input',()=>$('#sc-err').textContent='');
+$('#sc-x').addEventListener('click',()=>$('#sc').hidden=true);
+$('#pj-scb').addEventListener('click',()=>{openScan('project')});
+const exJSON=()=>JSON.stringify({app:'filamentregal',v:1,at:new Date().toISOString(),data:S});
+$('#ex').addEventListener('click',async()=>{$('#ex-err').textContent='';const js=exJSON(),fn='filamentregal-backup-'+today()+'.json';
+try{if(PWA&&navigator.canShare){const f=new File([js],fn,{type:'application/json'});if(navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Filamentregal-Backup'});return}}}catch(e){if(e&&e.name==='AbortError')return}
+try{await navigator.clipboard.writeText(js);toast('Backup in die Zwischenablage kopiert. In Notizen oder Dateien einfügen.',null)}catch(e){$('#extxt').hidden=false;$('#extxt').value=js;$('#ex-err').textContent='Kopieren ging nicht. Das Backup steht im Feld, markier und kopier es dort.'}});
+let impArm=0;
+function doImport(t){let v;try{v=parseAI(t);v=v.data||v}catch(e){$('#ex-err').textContent='Das ist kein gültiges Backup.';return}
+if(!v||!Array.isArray(v.spools)||!Array.isArray(v.printers)){$('#ex-err').textContent='Das ist kein Filamentregal-Backup.';return}
+if(Date.now()-impArm>8000){impArm=Date.now();$('#ex-err').textContent=`Backup mit ${v.spools.length} Spulen und ${(v.projects||[]).length} Projekten gefunden. Tippe innerhalb von 8 Sekunden nochmal, um deine aktuellen Daten zu ersetzen.`;$('#ex-err').dataset.pending=JSON.stringify(v);return}
+impArm=0;S=v;S.ts=Date.now();try{localStorage.setItem(KEY,JSON.stringify({base:EMB,s:S}))}catch(e){}if(art){pub()}else location.reload()}
+$('#imb').addEventListener('click',async()=>{$('#ex-err').textContent=$('#ex-err').textContent;if(impArm&&Date.now()-impArm<8000&&$('#ex-err').dataset.pending){doImport($('#ex-err').dataset.pending);return}
+try{const t=await navigator.clipboard.readText();if(t&&t.includes('"spools"')){doImport(t);return}if(PWA){$('#imf2').click();return}throw 0}catch(e){if(PWA){$('#imf2').click();return}$('#extxt').hidden=false;$('#ex-err').textContent='Füge das Backup ins Feld ein und tippe nochmal auf „Backup importieren“.';const t=$('#extxt').value.trim();if(t)doImport(t)}});
+$('#imf2').addEventListener('change',async()=>{const f=$('#imf2').files[0];$('#imf2').value='';if(f)doImport(await f.text())});
+let pjImgs=[];
+$('#pjadd').addEventListener('click',()=>{pjImgs=[];$('#pj-n').textContent='';$('#pj-txt').value='';$('#pj-name').value='';$('#pj-link').value='';$('#pj-err').textContent='';$('#pj-pr').innerHTML=S.printers.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');$('#pj-pr').value=S.cfg.pr;$('#pj-ai').hidden=!smp;$('#pj-sc').hidden=!!smp;$('#pj-go').hidden=!smp;$('#pj-3mf').disabled=false;$('#pj').hidden=false;$('#pj-name').focus()});
+$('#pj-img').addEventListener('click',()=>$('#pj-f').click());
+$('#pj-3mf').addEventListener('click',()=>$('#pj-3f').click());
+$('#pj-3f').addEventListener('change',async()=>{const fl=$('#pj-3f').files[0];$('#pj-3f').value='';if(!fl)return;const bt=$('#pj-3mf');bt.disabled=true;bt.textContent='Lese 3MF …';$('#pj-err').textContent='';
+try{if(typeof DecompressionStream==='undefined')throw new Error('nods');const v=await read3mf(fl);if(!v.plates.length||!v.nFil&&!v.plates.some(p=>p.filaments.length))throw new Error('leer');
+const pr=mkProject(v,$('#pj-name').value.trim()||fl.name.replace(/\.(gcode\.)?3mf$/i,'').replace(/[_-]+/g,' ').trim(),$('#pj-link').value.trim(),$('#pj-pr').value);S.projects.unshift(pr);pjCur=pr.id;$('#pj').hidden=true;save();
+toast(v.sliced?`${pr.plates.length} Platten und ${pr.reqs.length} Filamente aus der 3MF übernommen`:`Datei ist nicht geslict: ${pr.plates.length} Platten und ${pr.reqs.length} Filamente übernommen, Gramm und Zeit bitte nachtragen`,null)}
+catch(er){$('#pj-err').textContent=String(er&&er.message)==='nods'?'Dein Browser kann die 3MF nicht entpacken. Aktualisiere ihn oder nimm Screenshots.':String(er&&er.message)==='zip'?'Das ist keine gültige 3MF-Datei.':'In der Datei habe ich keine Platten oder Filamente gefunden. Öffne sie in Bambu Studio, slice alle Platten und speichere sie neu.'}
+finally{bt.disabled=false;bt.textContent='3MF-Datei wählen'}});
+$('#pj-f').addEventListener('change',()=>{pjImgs=[...$('#pj-f').files].slice(0,6);$('#pj-f').value='';$('#pj-n').textContent=pjImgs.length?pjImgs.length+' Bild'+(pjImgs.length>1?'er':'')+' gewählt':'';$('#pj-err').textContent=''});
+function pjFromV(v){const pr=mkProject(v,$('#pj-name').value.trim(),$('#pj-link').value.trim(),$('#pj-pr').value||S.cfg.pr);S.projects.unshift(pr);pjCur=pr.id;$('#pj').hidden=true;save();location.hash='#projekte';
+toast(`${pr.plates.length} Platten und ${pr.reqs.length} Filamente erkannt${v.note?' · '+v.note:''}`.slice(0,140),null)}
+$('#pj-x').addEventListener('click',()=>$('#pj').hidden=true);
+$('#pj-man').addEventListener('click',()=>{const pr=mkProject({plates:[]},$('#pj-name').value.trim()||'Neues Projekt',$('#pj-link').value.trim(),$('#pj-pr').value);S.projects.unshift(pr);pjCur=pr.id;$('#pj').hidden=true;save()});
+$('#pjf').addEventListener('submit',async e=>{e.preventDefault();const txt=$('#pj-txt').value.trim();if(!smp){$('#pj-err').textContent='Die Auswertung per Claude ist hier nicht verfügbar. Leg das Projekt manuell an.';return}if(!pjImgs.length&&!txt){$('#pj-err').textContent='Wähle Screenshots oder füge Text ein.';return}
+const go=$('#pj-go');go.disabled=true;go.textContent='Claude liest …';$('#pj-err').textContent='';
+try{const imgs=await Promise.all(pjImgs.map(shrink));
+const prompt=`Du bekommst ${imgs.length?'Screenshots':'Text'} eines 3D-Druckprojekts (MakerWorld-Profilseite oder Bambu Studio nach dem Slicen). Lies jede Druckplatte heraus.
+Antworte NUR mit JSON: {"name":"Projektname oder leer","plates":[{"name":"Plattenname wie angezeigt","minutes":Druckzeit in Minuten als Zahl,"filaments":[{"material":"PLA, PETG, ABS, ASA, TPU, PA, PC oder PETG-CF","color":"Farbname wie angezeigt, sonst eine kurze deutsche Beschreibung wie Hellgrün","hex":"#rrggbb, Farbe des Farbfelds","grams":Gramm als Zahl}]}],"note":"kurzer Hinweis auf Unsicheres, Deutsch, oder leer"}
+Gleiche Farbe auf einer Platte zusammenfassen. Stützmaterial nur aufnehmen, wenn es ein eigenes Filament ist. Fehlt die Zeit, schätze nicht, sondern setze 0.${txt?'\n\nText:\n'+txt:''}`;
+const v=await smp.json(prompt,imgs.length?{images:imgs,modelTier:'default'}:{modelTier:'default'});
+if(!v||!Array.isArray(v.plates)||!v.plates.length){$('#pj-err').textContent='Ich konnte keine Platten erkennen. '+((v&&v.note)||'Versuch einen Screenshot, auf dem Filamente und Druckzeit pro Platte stehen.');return}
+pjFromV(v)}
+catch(er){$('#pj-err').textContent=er&&er.code==='rate_limited'?'Gerade zu viele Anfragen. Versuch es in einer Minute nochmal.':er&&er.code==='not_granted'?'Die Auswertung per Claude ist hier nicht erlaubt.':'Das hat nicht geklappt. Versuch es mit schärferen Screenshots nochmal.'}
+finally{go.disabled=false;go.textContent='Auslesen'}});
+$('#v-projekte').addEventListener('click',e=>{const c=e.target.closest('[data-pj]');if(c){pjCur=c.dataset.pj;pjRender();window.scrollTo(0,$('#v-projekte').offsetTop-8);return}
+const b=e.target.closest('[data-pa]');if(!b||b.tagName==='SELECT'||b.type==='checkbox')return;const pr=PJ().find(x=>x.id===pjCur);const a=b.dataset.pa;
+if(a==='back'){pjCur=null;pjRender();return}if(!pr)return;
+if(a==='cost'){openForm({title:'Nacharbeit und Aufschlag',fields:[{k:'lab',l:'Nacharbeit gesamt (min)',t:'num',v:pr.lab||0},{k:'mar',l:'Gewinnaufschlag (%)',t:'num',v:pr.mar??S.cfg.mar??0},{t:'info',l:'Nacharbeit: Stützen entfernen, schleifen, zusammenbauen. Gerechnet mit deinem Stundensatz aus dem Kosten-Tab.'}],save:v=>{if(!(v.lab>=0))return 'Gib die Minuten ein, 0 ist auch okay.';if(!(v.mar>=0))return 'Gib den Aufschlag ein, 0 ist auch okay.';pr.lab=Math.round(v.lab);pr.mar=v.mar;return ''}})}
+if(a==='replan'){pjFresh(pr);save();toast('Reihenfolge neu berechnet',null)}
+if(a==='delpj'){const i=S.projects.indexOf(pr);S.projects.splice(i,1);pjCur=null;save();toast(`„${pr.name}“ gelöscht`,()=>{S.projects.splice(i,0,pr)})}
+if(a==='addr'||a==='edr'){const q=a==='edr'?rq(pr,b.dataset.r):null;openForm({title:q?'Filament ändern':'Filament hinzufügen',fields:[{k:'material',l:'Material',t:'sel',o:opts.map(o=>[o,o]),v:q?q.material:'PLA'},{k:'hex',l:'Farbe',t:'color',v:q?q.hex:'#00ae42'},{k:'color',l:'Farbname',v:q?q.color:'',full:1,ph:'Hellgrün'}],
+del:q?()=>{pr.reqs=pr.reqs.filter(x=>x!==q);for(const x of pr.plates)x.fil=x.fil.filter(f=>f.r!==q.id);delete pr.map[q.id];pjFresh(pr)}:null,
+save:v=>{if(!v.color)return 'Gib einen Farbnamen ein.';if(q){Object.assign(q,{material:v.material,hex:hexOk(v.hex),color:v.color});delete pr.map[q.id]}else pr.reqs.push({id:'r'+Date.now().toString(36),material:v.material,hex:hexOk(v.hex),color:v.color});pjFresh(pr);return ''}})}
+if(a==='addp'||a==='edp'){const x=a==='edp'?pr.plates.find(y=>y.id===b.dataset.p):null;if(!pr.reqs.length&&!x){toast('Leg zuerst die Filamente an.',null);return}
+openForm({title:x?'Platte ändern':'Platte hinzufügen',fields:[{k:'name',l:'Name',v:x?x.name:'Platte '+(pr.plates.length+1),full:1},{k:'h',l:'Stunden',t:'num',v:x?Math.floor(x.min/60):0},{k:'m',l:'Minuten',t:'num',v:x?x.min%60:0}].concat(pr.reqs.map(q=>({k:'g_'+q.id,l:`${q.material} ${q.color} (g)`,t:'num',step:'0.1',v:x?((x.fil.find(f=>f.r===q.id)||{}).g||''):''}))),
+del:x?()=>{pr.plates=pr.plates.filter(y=>y!==x);delete pr.done[x.id];pr.order=pr.order.filter(o=>o!==x.id);pjFresh(pr)}:null,
+save:v=>{const min=Math.round((isNaN(v.h)?0:v.h)*60+(isNaN(v.m)?0:v.m));if(!v.name)return 'Gib der Platte einen Namen.';if(!(min>0))return 'Gib die Druckzeit ein.';const fil=pr.reqs.map(q=>({r:q.id,g:Math.round((isNaN(v['g_'+q.id])?0:v['g_'+q.id])*10)/10})).filter(f=>f.g>0);if(!fil.length)return 'Gib bei mindestens einem Filament die Gramm an.';
+if(x)Object.assign(x,{name:v.name,min,fil});else pr.plates.push({id:'l'+Date.now().toString(36),name:v.name,min,fil});pjFresh(pr);return ''}})}});
+$('#v-projekte').addEventListener('change',e=>{const b=e.target.closest('[data-pa]');if(!b)return;const pr=PJ().find(x=>x.id===pjCur);if(!pr)return;const a=b.dataset.pa;
+if(a==='map'){pr.map[b.dataset.r]=b.value;if(b.value)for(const k in pr.map)if(k!==b.dataset.r&&pr.map[k]===b.value)delete pr.map[k];pjFresh(pr);save()}
+if(a==='pr'){pr.printer=b.value;pjFresh(pr);save()}
+if(a==='tick')tick(pr,b.dataset.p)});
+let gfs=null;
+function openForm(o){gfs=o;$('#gh').textContent=o.title;$('#g-err').textContent='';$('#g-del').hidden=!o.del;$('#g-ok').textContent=o.ok||'Speichern';
+$('#gfields').innerHTML=o.fields.map(f=>{const st=f.full?' style="grid-column:1/-1"':'';
+if(f.t==='sel')return `<label${st}>${f.l}<select data-k="${f.k}">${f.o.map(([v,l])=>`<option value="${esc(v)}"${String(v)===String(f.v)?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`;
+if(f.t==='chk')return `<label class="chk"${st}><input type="checkbox" data-k="${f.k}"${f.v?' checked':''}> ${f.l}</label>`;
+if(f.t==='color')return `<label${st}>${f.l}<input type="color" data-k="${f.k}" value="${hexOk(f.v)}"></label>`;
+if(f.t==='info')return `<p class="note"${st} style="margin:0;grid-column:1/-1">${f.l}</p>`;
+return `<label${st}>${f.l}<input data-k="${f.k}" ${f.t==='num'?`type="number" inputmode="decimal" min="0" step="${f.step||1}"`:'type="text"'}${f.list?` list="${f.list}"`:''}${f.ph?` placeholder="${esc(f.ph)}"`:''} value="${esc(f.v??'')}"></label>`}).join('');
+$('#gs').hidden=false;const fi=$('#gfields input,#gfields select');if(fi)fi.focus()}
+$('#gf').addEventListener('submit',e=>{e.preventDefault();if(!gfs)return;const v={};for(const el of $('#gfields').querySelectorAll('[data-k]'))v[el.dataset.k]=el.type==='checkbox'?el.checked:el.type==='number'?(el.value===''?NaN:+el.value):el.value.trim();
+const err=gfs.save(v);if(err){$('#g-err').textContent=err;return}$('#gs').hidden=true;save()});
+$('#gf').addEventListener('input',()=>$('#g-err').textContent='');
+$('#g-x').addEventListener('click',()=>$('#gs').hidden=true);
+$('#g-del').addEventListener('click',()=>{if(gfs&&gfs.del){gfs.del();$('#gs').hidden=true;save()}});
+const prOpts=all=>(all?[['','Alle Drucker']]:[]).concat(S.printers.map(p=>[p.id,p.name]));
+function taskForm(t,pid){openForm({title:t?'Aufgabe ändern':'Neue Aufgabe',fields:[{k:'name',l:'Aufgabe',v:t?t.name:'',full:1,ph:'Düse tauschen'},{k:'h',l:'Alle … Druckstunden',t:'num',v:t?t.h||'':'',ph:'leer = keine'},{k:'d',l:'Alle … Tage',t:'num',v:t?t.d||'':'',ph:'leer = keine'},{t:'info',l:'Mindestens ein Intervall angeben. Es zählt, was zuerst erreicht ist.'}],
+del:t?()=>{const i=S.maint.indexOf(t);S.maint.splice(i,1);setTimeout(()=>toast(`„${t.name}“ gelöscht`,()=>S.maint.splice(i,0,t)),0)}:null,
+save:v=>{const h=isNaN(v.h)?0:Math.round(v.h),d=isNaN(v.d)?0:Math.round(v.d);if(!v.name)return 'Gib der Aufgabe einen Namen.';if(!h&&!d)return 'Gib Stunden, Tage oder beides an.';if(t)Object.assign(t,{name:v.name,h,d});else{const p=S.printers.find(x=>x.id===pid);S.maint.push({id:'t'+Date.now().toString(36),printer:pid,name:v.name,h,d,lastH:p.hours||0,lastD:today()})}return ''}})}
+function partForm(x){openForm({title:x?'Ersatzteil ändern':'Neues Ersatzteil',fields:[{k:'name',l:'Teil',v:x?x.name:'',full:1,list:'dl-parts',ph:'Düse 0,4 mm gehärtet'},{k:'printer',l:'Für',t:'sel',o:prOpts(1),v:x?x.printer:'',full:1},{k:'qty',l:'Bestand',t:'num',v:x?x.qty:1},{k:'min',l:'Mindestbestand',t:'num',v:x?x.min:1}],
+del:x?()=>{const i=S.parts.indexOf(x);S.parts.splice(i,1);setTimeout(()=>toast(`„${x.name}“ gelöscht`,()=>S.parts.splice(i,0,x)),0)}:null,
+save:v=>{if(!v.name)return 'Gib einen Namen ein.';if(!(v.qty>=0))return 'Gib den Bestand ein, 0 ist auch okay.';if(!(v.min>=0))return 'Gib den Mindestbestand ein.';const d={name:v.name,printer:v.printer,qty:Math.round(v.qty),min:Math.round(v.min)};if(x)Object.assign(x,d);else S.parts.push({id:'x'+Date.now().toString(36),...d});return ''}})}
+function accForm(x){openForm({title:x?'Zubehör ändern':'Neues Zubehör',fields:[{k:'name',l:'Name',v:x?x.name:'',full:1,list:'dl-acc',ph:'Textured PEI Plate'},{k:'kind',l:'Art',t:'sel',o:[['Druckplatte','Druckplatte'],['Düse','Düse / Hotend'],['Sonstiges','Sonstiges']],v:x?x.kind:'Druckplatte'},{k:'hours',l:'Schon benutzt (h)',t:'num',step:'0.1',v:x?x.hours||0:0}],
+del:x?()=>{const i=S.acc.indexOf(x);S.acc.splice(i,1);setTimeout(()=>toast(`„${x.name}“ gelöscht`,()=>S.acc.splice(i,0,x)),0)}:null,
+save:v=>{if(!v.name)return 'Gib einen Namen ein.';if(!(v.hours>=0))return 'Gib die Stunden ein, 0 ist auch okay.';const d={name:v.name,kind:v.kind,hours:Math.round(v.hours*10)/10};if(x)Object.assign(x,d);else S.acc.push({id:'a'+Date.now().toString(36),on:false,printer:'',...d});return ''}})}
+$('#v-wartung').addEventListener('click',e=>{const b=e.target.closest('[data-w]');if(!b)return;const w=b.dataset.w,t=S.maint.find(x=>x.id===b.dataset.t),p=S.printers.find(x=>x.id===b.dataset.p),x=S.parts.find(y=>y.id===b.dataset.x),a=S.acc.find(y=>y.id===b.dataset.x);
+if(w==='done'&&t){const pr=S.printers.find(q=>q.id===t.printer),old={lastH:t.lastH,lastD:t.lastD};t.lastH=pr.hours||0;t.lastD=today();save();toast(`„${t.name}“ erledigt`,()=>Object.assign(t,old))}
+if(w==='edt'&&t)taskForm(t);
+if(w==='addt'&&p)taskForm(null,p.id);
+if(w==='hrs'&&p)openForm({title:'Betriebsstunden: '+p.name,fields:[{k:'h',l:'Aktuelle Druckstunden',t:'num',step:'0.1',v:p.hours||0,full:1},{t:'info',l:'Steht im Drucker unter Einstellungen oder in der Bambu-Handy-App. Beim ersten Eintragen gelten alle Stunden-Intervalle ab jetzt.'}],save:v=>{if(!(v.h>=0))return 'Gib die Stunden ein.';const first=!p.hours;p.hours=Math.round(v.h*10)/10;if(first)for(const q of S.maint)if(q.printer===p.id)q.lastH=p.hours;return ''}});
+if(w==='addp')partForm();if(w==='edp'&&x)partForm(x);
+if((w==='pm'||w==='pp')&&x){x.qty=Math.max(0,x.qty+(w==='pp'?1:-1));save()}
+if(w==='adda')accForm();if(w==='eda'&&a)accForm(a);
+if(w==='out'&&a){const op=a.printer;a.on=false;a.printer='';save();toast(`„${a.name}“ entnommen`,()=>{a.on=true;a.printer=op})}
+if(w==='in'&&a)openForm({title:a.name+' einsetzen',ok:'Einsetzen',fields:[{k:'p',l:'In welchen Drucker?',t:'sel',o:prOpts(0),v:S.cfg.pr,full:1}].concat(a.kind==='Druckplatte'?[{t:'info',l:'Eine andere Druckplatte in diesem Drucker kommt dabei ins Lager.'}]:[]),save:v=>{if(a.kind==='Druckplatte')for(const o of S.acc)if(o!==a&&o.on&&o.kind==='Druckplatte'&&o.printer===v.p){o.on=false;o.printer=''}a.on=true;a.printer=v.p;return ''}})});
+let smp=null,imItems=[];
+function shrink(f){return new Promise(res=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const k=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>res(b||f),'image/jpeg',0.85)};im.onerror=()=>{URL.revokeObjectURL(u);res(f)};im.src=u})}
+const bbHex=(brand,product,color)=>{if(!/bambu/i.test(brand||''))return null;const c=String(color||'').toLowerCase();const ps=BB.filter(p=>product&&String(product).toLowerCase().includes(p.n.toLowerCase().replace('bambu ','')));for(const p of (ps.length?ps:BB)){const m=p.c.find(([n])=>n.toLowerCase()===c);if(m)return m[1]}return null};
+function imDraw(){$('#imr').innerHTML=imItems.map((it,i)=>`<div class="ir${it.on?'':' off'}" data-i="${i}"><input type="checkbox" class="on" data-f="on" ${it.on?'checked':''} aria-label="Übernehmen">
+<label>Farbe<input data-f="color" value="${esc(it.color)}"></label><label>Material<select data-f="material">${opts.map(o=>`<option${o===it.material?' selected':''}>${o}</option>`).join('')}</select></label>
+<label>Marke<input data-f="brand" value="${esc(it.brand)}"></label><label>Farbcode<input type="color" data-f="hex" value="${esc(it.hex)}"></label>
+<label>Anzahl<input type="number" min="1" step="1" data-f="qty" value="${it.qty}"></label><label>Preis/Rolle (€)<input type="number" min="0" step="0.01" data-f="price" value="${it.price}"></label>
+<span></span><label>Netto (g)<input type="number" min="1" step="1" data-f="net" value="${it.net}"></label><label>Art<select data-f="kind"><option value="spool"${it.kind==='spool'?' selected':''}>Mit Spule</option><option value="refill"${it.kind==='refill'?' selected':''}>Refill</option></select></label></div>`).join('');
+const n=imItems.filter(x=>x.on).reduce((a,x)=>a+(+x.qty||0),0);$('#im-go').textContent=n?n+(n===1?' Rolle':' Rollen')+' übernehmen':'Übernehmen'}
+function showIm(v){$('#im-err').textContent='';$('#im').hidden=false;const its=(v&&Array.isArray(v.items))?v.items:[];
+imItems=its.map(x=>{const mat=opts.includes(x.material)?x.material:(/cf/i.test(x.material||'')&&/petg/i.test(x.material||'')?'PETG-CF':'Sonstiges');const brand=String(x.brand||'').trim(),product=String(x.product||'').trim();
+return {on:true,brand:(/bambu/i.test(brand)&&product?'Bambu '+product.replace(/^bambu\s*(lab)?\s*/i,''):[brand,product].filter(Boolean).join(' ')).trim(),material:mat,color:String(x.color||'Unbekannt').trim(),hex:/^#[0-9a-f]{6}$/i.test(bbHex(brand,product,x.color)||x.hex||'')?(bbHex(brand,product,x.color)||x.hex).toLowerCase():'#888888',net:Math.round(+x.net)||1000,qty:Math.max(1,Math.round(+x.qty)||1),price:(+x.price>0)?Math.round(+x.price*100)/100:'',kind:x.refill?'refill':'spool'}});
+$('#ims').textContent=(imItems.length?`${imItems.length} ${imItems.length===1?'Position':'Positionen'} erkannt. Prüf kurz die Angaben und übernimm sie.`:'Ich konnte auf dem Foto kein Filament erkennen.')+(v&&v.note?' '+v.note:'');
+$('#im-go').hidden=!imItems.length;imDraw()}
+$('#ph').addEventListener('click',()=>{if(smp)$('#phf').click();else openScan('spool')});
+$('#phf').addEventListener('change',async()=>{const fs=[...$('#phf').files].slice(0,4);$('#phf').value='';if(!fs.length||!smp)return;
+$('#ims').textContent='';$('#im-err').textContent='';$('#imr').innerHTML='<div class="busy"><i></i>Claude liest das Foto …</div>';$('#im-go').hidden=true;$('#im').hidden=false;
+try{const imgs=await Promise.all(fs.map(shrink));
+const prompt=`Du siehst ${imgs.length>1?'Fotos':'ein Foto'} von 3D-Druck-Filament: ein Spulen-Etikett, ein Karton, ein Lieferschein oder eine Rechnung. Lies jede Filamentrolle heraus.
+Antworte NUR mit JSON: {"items":[{"brand":"Hersteller","product":"Produktlinie, z.B. PLA Basic","material":"einer von PLA, PETG, ABS, ASA, TPU, PA, PC, PETG-CF, Sonstiges","color":"Farbname wie gedruckt","hex":"#rrggbb, beste Schätzung der Farbe","net":Nettogewicht in Gramm als Zahl (Standard 1000),"qty":Anzahl Rollen als Zahl,"price":Preis pro Rolle in Euro brutto als Zahl oder null,"refill":true wenn Refill/ohne Spule, sonst false}],"note":"kurzer Hinweis auf Unsicheres, Deutsch, oder leer"}
+Mehrere gleiche Rollen in einer Zeile zusammenfassen. Versandkosten, Zubehör und Drucker weglassen. Wenn kein Filament erkennbar ist: {"items":[],"note":"Grund"}.`;
+const v=await smp.json(prompt,{images:imgs,modelTier:'default'});
+showIm(v)}
+catch(e){$('#imr').innerHTML='';$('#im-go').hidden=true;$('#ims').textContent='';$('#im-err').textContent=e&&e.code==='rate_limited'?'Gerade zu viele Anfragen. Versuch es in einer Minute nochmal.':e&&e.code==='not_granted'?'Die Fotoerkennung ist hier nicht erlaubt.':'Das Foto konnte nicht gelesen werden. Versuch ein schärferes Bild mit gutem Licht.';if(e&&e.code==='not_granted')$('#ph').hidden=true}});
+$('#imr').addEventListener('input',e=>{const row=e.target.closest('.ir'),f=e.target.dataset.f;if(!row||!f)return;const it=imItems[+row.dataset.i];it[f]=f==='on'?e.target.checked:e.target.value;if(f==='on'){row.classList.toggle('off',!it.on)}$('#im-err').textContent='';const n=imItems.filter(x=>x.on).reduce((a,x)=>a+(+x.qty||0),0);$('#im-go').textContent=n?n+(n===1?' Rolle':' Rollen')+' übernehmen':'Übernehmen'});
+$('#imr').addEventListener('change',e=>{if(e.target.dataset.f==='material'||e.target.dataset.f==='kind'){const row=e.target.closest('.ir');imItems[+row.dataset.i][e.target.dataset.f]=e.target.value}});
+$('#im-x').addEventListener('click',()=>$('#im').hidden=true);
+$('#imf').addEventListener('submit',e=>{e.preventDefault();const sel=imItems.filter(x=>x.on);if(!sel.length){$('#im-err').textContent='Wähle mindestens eine Position.';return}
+for(const x of sel){if(!String(x.color).trim()){$('#im-err').textContent='Jede Position braucht einen Farbnamen.';return}if(!(+x.qty>=1&&+x.qty<=50)){$('#im-err').textContent='Anzahl zwischen 1 und 50.';return}if(!(+x.net>0)){$('#im-err').textContent='Das Nettogewicht muss größer als 0 sein.';return}}
+if(S.sample){S.spools=[];S.sample=false}const added=[];let k=0;
+for(const x of sel)for(let i=0;i<Math.round(+x.qty);i++){const sp={id:'s'+Date.now().toString(36)+(k++),material:x.material,brand:String(x.brand).trim(),color:String(x.color).trim(),hex:x.hex,net:Math.round(+x.net),rest:Math.round(+x.net),price:x.price===''?'':Math.round(+x.price*100)/100,dried:'',place:'',kind:x.kind,status:'lager'};S.spools.push(sp);added.push(sp)}
+$('#im').hidden=true;fm();save();toast(`${added.length} ${added.length===1?'Rolle':'Rollen'} vom Foto übernommen`,()=>{S.spools=S.spools.filter(s=>!added.includes(s));fm()})});
+$('#l-pr').addEventListener('change',()=>{const p=S.printers.find(x=>x.id===$('#l-pr').value);lu=p.ams?1:0;ff();ldDraw()});
+$('#l-ams').addEventListener('change',()=>{lu=+$('#l-ams').value;ff();ldDraw()});
+$('#l-slot').addEventListener('click',e=>{const b=e.target.closest('[data-sl]');if(!b)return;lsl=+b.dataset.sl;$('#l-err').textContent='';ldDraw()});
+$('#l-x').addEventListener('click',()=>$('#ld').hidden=true);
+$('#lf').addEventListener('submit',e=>{e.preventDefault();if(!lsl){$('#l-err').textContent='Wähle einen Slot.';return}
+const pid=$('#l-pr').value,o=at(pid,lu,lsl),me={...ls},prev=o&&o!==ls?{...o}:null;
+if(prev)unload(o);Object.assign(ls,{status:'geladen',printer:pid,ams:lu,slot:lsl});const s=ls;
+$('#ld').hidden=true;save();toast(`„${s.color}“ geladen${prev?`, „${prev.color}“ ins Lager`:''}`,()=>{for(const k of ['printer','ams','slot'])delete s[k];Object.assign(s,me);if(prev)Object.assign(o,prev)})});
+$('#ams').addEventListener('click',e=>{const a=e.target.closest('[data-ed]'),b=e.target.closest('[data-ld]');if(a)openEd(S.spools.find(s=>s.id===a.dataset.ed));if(b)openLoad(S.spools.find(s=>s.id===b.dataset.ld))});
+const BB=[
+['PLA Basic','PLA',25.99,'Jade White:#FFFFFF|Black:#000000|Light Gray:#D1D3D5|Gray:#8E9089|Dark Gray:#545454|Silver:#A6A9AA|Gold:#E4BD68|Beige:#F7E6DE|Red:#C12E1F|Maroon Red:#9D2235|Orange:#FF6A13|Pumpkin Orange:#FF9016|Yellow:#F4EE2A|Sunflower Yellow:#FEC600|Bright Green:#BECF00|Bambu Green:#00AE42|Mistletoe Green:#3F8E43|Turquoise:#00B1B7|Cyan:#0086D6|Cobalt Blue:#0056B8|Blue:#0A2989|Blue Gray:#5B6579|Purple:#5E43B7|Indigo Purple:#482960|Magenta:#EC008C|Pink:#F55A74|Hot Pink:#F5547C|Brown:#9D432C|Cocoa Brown:#6F5034|Bronze:#847D48'],
+['PLA Matte','PLA',25.99,'Ivory White:#FFFFFF|Charcoal:#000000|Ash Gray:#9B9EA0|Nardo Gray:#757575|Bone White:#CBC6B8|Desert Tan:#E8DBB7|Latte Brown:#D3B7A7|Caramel:#AE835B|Dark Brown:#7D6556|Terracotta:#B15533|Scarlet Red:#DE4343|Dark Red:#BB3D43|Plum:#950051|Mandarin Orange:#F99963|Lemon Yellow:#F7D959|Grass Green:#61C680|Dark Green:#68724D|Ice Blue:#A3D8E1|Sky Blue:#56B7E6|Marine Blue:#0078BF|Dark Blue:#042F56|Sakura Pink:#E8AFCF|Lilac Purple:#AE96D4'],
+['PLA Silk+','PLA',25.99,'White:#FFFFFF|Silver:#C8C8C8|Titan Gray:#5F6367|Gold:#F4A925|Champagne:#F3CFB2|Rose Gold:#BA9594|Pink:#F7ADA6|Candy Red:#D02727|Candy Green:#018814|Mint:#96DCB9|Baby Blue:#A8C6EE|Blue:#008BDA|Purple:#8671CB'],
+['PETG HF','PETG',25.99,'Black:#000000|White:#FFFFFF|Gray:#ADB1B2|Dark Gray:#515151|Cream:#F9DFB9|Peanut Brown:#875718|Red:#EB3A3A|Orange:#F75403|Yellow:#FFD00B|Lime Green:#6EE53C|Green:#00AE42|Forest Green:#39541A|Lake Blue:#1F79E5|Blue:#002E96'],
+['PETG Translucent','PETG',25.99,'Clear:#E8EEF0|Translucent Gray:#8E8E8E|Translucent Brown:#C9A381|Translucent Orange:#FF911A|Translucent Pink:#F9C1BD|Translucent Purple:#B8ACD6|Translucent Light Blue:#61B0FF|Translucent Teal:#77EDD7|Translucent Olive:#748C45'],
+['PETG-CF','PETG-CF',32.99,'Black:#000000|Titan Gray:#565656|Brick Red:#9F332A|Indigo Blue:#324585|Malachite Green:#16B08E|Violet Purple:#583061'],
+['ABS','ABS',25.99,'Black:#000000|White:#FFFFFF|Silver:#87909A|Red:#D32941|Orange:#FF6A13|Yellow:#FFD00B|Bambu Green:#00AE42|Azure:#489FDF|Blue:#0A2CA5|Navy Blue:#0C2340'],
+['ASA','ASA',27.99,'Black:#000000|White:#FFFFFF|Gray:#8A949E|Red:#E02928|Green:#00A6A0|Blue:#2140B4'],
+['TPU 95A HF','TPU',34.99,'Black:#000000|White:#FFFFFF|Gray:#939393|Red:#C8102E|Yellow:#F3E600|Blue:#0072CE']
+].map(([n,m,p,c])=>({n,m,p,c:c.split('|').map(x=>x.split(':'))}));
+let bp=BB[0],bc=null;
+function bbDraw(){$('#b-prod').innerHTML=BB.map((p,i)=>`<button type="button" data-i="${i}" aria-pressed="${p===bp}">${p.n}</button>`).join('');
+$('#b-col').innerHTML=bp.c.map(([n,h],i)=>`<button type="button" data-c="${i}" aria-pressed="${bc===i}"><i style="background:${h}"></i>${n}</button>`).join('');
+$('#b-price').value=(bp.p-($('#b-ref').checked?3:0)).toFixed(2);const n=Math.max(1,Math.round(num('#b-n')||1));$('#b-go').textContent=n>1?n+' Spulen hinzufügen':'Hinzufügen'}
+$('#bb').addEventListener('click',()=>{bc=null;$('#b-err').textContent='';$('#b-n').value=1;bbDraw();$('#bm').hidden=false});
+$('#b-prod').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b)return;bp=BB[+b.dataset.i];bc=null;bbDraw()});
+$('#b-col').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(!b)return;bc=+b.dataset.c;$('#b-err').textContent='';for(const x of $('#b-col').children)x.setAttribute('aria-pressed',x===b)});
+$('#b-ref').addEventListener('change',bbDraw);$('#b-n').addEventListener('input',()=>{const n=Math.max(1,Math.round(num('#b-n')||1));$('#b-go').textContent=n>1?n+' Spulen hinzufügen':'Hinzufügen'});
+$('#b-x').addEventListener('click',()=>$('#bm').hidden=true);
+$('#bf').addEventListener('submit',e=>{e.preventDefault();const n=Math.round(num('#b-n')),price=num('#b-price');
+const err=bc===null?'Wähle eine Farbe.':!(n>=1&&n<=20)?'Anzahl zwischen 1 und 20.':!(price>=0)?'Der Preis ist ungültig.':'';if(err){$('#b-err').textContent=err;return}
+const [cn,hex]=bp.c[bc];if(S.sample){S.spools=[];S.sample=false}const added=[];
+for(let i=0;i<n;i++){const s={id:'s'+Date.now().toString(36)+i,material:bp.m,brand:'Bambu '+bp.n,color:cn,hex:hex.toLowerCase(),net:1000,rest:1000,price:Math.round(price*100)/100,dried:'',place:$('#b-place').value.trim(),kind:$('#b-ref').checked?'refill':'spool',status:'lager'};S.spools.push(s);added.push(s)}
+$('#bm').hidden=true;fm();save();toast(`${n>1?n+'× ':''}${bp.n} ${cn} hinzugefügt`,()=>{S.spools=S.spools.filter(s=>!added.includes(s));fm()});if($('#b-st').value==='geladen')openLoad(added[0])});
+$('#clr').addEventListener('click',()=>{S.spools=[];S.sample=false;fm();save()});
+$('#q').addEventListener('input',grid);$('#fm').addEventListener('change',grid);$('#fs').addEventListener('change',grid);
+$('#chips').addEventListener('click',e=>{const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k;sel.has(k)?sel.delete(k):sel.add(k);adv()});
+window.addEventListener('hashchange',view);
+fm();view();render();status('');if(PWA){$('#ph').hidden=false;$('#ph').textContent='Scannen'}
+if(window.claude&&typeof claude.use==='function'){claude.use('artifact').then(a=>{art=a}).catch(()=>{});claude.use('sample').then(async x=>{if(!x)return;try{const l=await x.limits();if(l&&l.images){smp=x;$('#ph').hidden=false}}catch(e){}}).catch(()=>{})}
+}
+</script>
+<script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))</script>
+</body>
+</html>
